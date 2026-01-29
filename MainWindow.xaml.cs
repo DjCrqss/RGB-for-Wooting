@@ -153,42 +153,46 @@ namespace WootingRGB
 
         private UIElement? CreateParameterControl(IEffectParameter parameter)
         {
-            var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
-
-            var label = new TextBlock
-            {
-                Text = parameter.DisplayName,
-                FontSize = 13,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
-                Margin = new Thickness(0, 0, 0, 8)
-            };
-            panel.Children.Add(label);
-
             switch (parameter.ParameterType)
             {
                 case EffectParameterType.Color:
                     if (parameter is ColorParameter colorParam)
                     {
-                        var colorPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                        var colorPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
+                        var colorRow = new Grid();
+                        colorRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                        colorRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
                         
-                        var colorDisplay = new Border
+                        var label = new TextBlock
+                        {
+                            Text = parameter.DisplayName,
+                            FontSize = 13,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(0, 0, 15, 0)
+                        };
+                        Grid.SetColumn(label, 0);
+                        
+                        var colorButton = new Button
                         {
                             Width = 40,
                             Height = 40,
                             Background = new SolidColorBrush(colorParam.ColorValue),
-                            CornerRadius = new CornerRadius(4),
-                            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")),
-                            BorderThickness = new Thickness(1),
-                            Margin = new Thickness(0, 0, 12, 0)
+                            BorderBrush = new SolidColorBrush(Colors.White),
+                            BorderThickness = new Thickness(2),
+                            Cursor = Cursors.Hand,
+                            HorizontalAlignment = HorizontalAlignment.Left
                         };
 
-                        var colorButton = new Button
-                        {
-                            Content = "Choose Color",
-                            Width = 120,
-                            Height = 40,
-                            Style = (Style)FindResource("ModernButton")
-                        };
+                        // Create circular button style
+                        var buttonTemplate = new ControlTemplate(typeof(Button));
+                        var border = new FrameworkElementFactory(typeof(Border));
+                        border.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Button.BackgroundProperty));
+                        border.SetValue(Border.BorderBrushProperty, new TemplateBindingExtension(Button.BorderBrushProperty));
+                        border.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(Button.BorderThicknessProperty));
+                        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(20));
+                        buttonTemplate.VisualTree = border;
+                        colorButton.Template = buttonTemplate;
 
                         colorButton.Click += (s, e) =>
                         {
@@ -197,24 +201,23 @@ namespace WootingRGB
                                 Owner = this
                             };
 
-                            // Subscribe to live color changes
                             dialog.ColorChanged += (sender, newColor) =>
                             {
                                 colorParam.Value = newColor;
-                                colorDisplay.Background = new SolidColorBrush(newColor);
+                                colorButton.Background = new SolidColorBrush(newColor);
                             };
 
-                            // Show dialog - no need to check DialogResult anymore
                             dialog.ShowDialog();
                             
-                            // Apply final color when closed
                             colorParam.Value = dialog.SelectedColor;
-                            colorDisplay.Background = new SolidColorBrush(dialog.SelectedColor);
+                            colorButton.Background = new SolidColorBrush(dialog.SelectedColor);
                         };
 
-                        colorPanel.Children.Add(colorDisplay);
-                        colorPanel.Children.Add(colorButton);
-                        panel.Children.Add(colorPanel);
+                        Grid.SetColumn(colorButton, 1);
+                        colorRow.Children.Add(label);
+                        colorRow.Children.Add(colorButton);
+                        colorPanel.Children.Add(colorRow);
+                        return colorPanel;
                     }
                     break;
 
@@ -224,16 +227,23 @@ namespace WootingRGB
                 case EffectParameterType.Direction:
                     if (parameter is RangeParameter rangeParam)
                     {
-                        var sliderPanel = new StackPanel();
+                        var sliderPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
                         
-                        var valueText = new TextBlock
+                        // Top row: Label
+                        var label = new TextBlock
                         {
-                            Text = $"{rangeParam.NumericValue:F0}",
-                            HorizontalAlignment = HorizontalAlignment.Right,
-                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#999999")),
-                            FontSize = 12,
-                            Margin = new Thickness(0, 0, 0, 5)
+                            Text = parameter.DisplayName,
+                            FontSize = 13,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
+                            Margin = new Thickness(0, 0, 0, 10)
                         };
+                        sliderPanel.Children.Add(label);
+
+                        // Bottom row: Slider, TextBox, and % symbol
+                        var controlRow = new Grid();
+                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
                         var slider = new Slider
                         {
@@ -242,23 +252,94 @@ namespace WootingRGB
                             Value = rangeParam.NumericValue,
                             TickFrequency = 1,
                             IsSnapToTickEnabled = true,
-                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFD45C"))
+                            Style = (Style)FindResource("EffectSlider"),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(0, 0, 15, 0)
+                        };
+                        Grid.SetColumn(slider, 0);
+
+                        // Create a border for rounded corners
+                        var textBoxBorder = new Border
+                        {
+                            Width = 50,
+                            Height = 30,
+                            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E1E1E")),
+                            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")),
+                            BorderThickness = new Thickness(1),
+                            CornerRadius = new CornerRadius(4),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(0, 0, 5, 0)
                         };
 
+                        var valueTextBox = new TextBox
+                        {
+                            Text = $"{rangeParam.NumericValue:F0}",
+                            Background = Brushes.Transparent,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0")),
+                            BorderThickness = new Thickness(0),
+                            Padding = new Thickness(8, 5, 8, 5),
+                            FontSize = 13,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            TextAlignment = TextAlignment.Center
+                        };
+
+                        textBoxBorder.Child = valueTextBox;
+                        Grid.SetColumn(textBoxBorder, 1);
+
+                        var percentSymbol = new TextBlock
+                        {
+                            Text = "%",
+                            FontSize = 13,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
+                            VerticalAlignment = VerticalAlignment.Center
+                        };
+                        Grid.SetColumn(percentSymbol, 2);
+
+                        // Slider updates TextBox
                         slider.ValueChanged += (s, e) =>
                         {
                             rangeParam.Value = e.NewValue;
-                            valueText.Text = $"{e.NewValue:F0}";
+                            valueTextBox.Text = $"{e.NewValue:F0}";
                         };
 
-                        sliderPanel.Children.Add(valueText);
-                        sliderPanel.Children.Add(slider);
-                        panel.Children.Add(sliderPanel);
+                        // TextBox updates slider and parameter
+                        valueTextBox.TextChanged += (s, e) =>
+                        {
+                            if (double.TryParse(valueTextBox.Text, out double value))
+                            {
+                                value = Math.Clamp(value, (double)rangeParam.MinValue, (double)rangeParam.MaxValue);
+                                if (Math.Abs(slider.Value - value) > 0.01)
+                                {
+                                    slider.Value = value;
+                                }
+                            }
+                        };
+
+                        // Handle focus loss to validate and correct input
+                        valueTextBox.LostFocus += (s, e) =>
+                        {
+                            if (!double.TryParse(valueTextBox.Text, out double value))
+                            {
+                                valueTextBox.Text = $"{slider.Value:F0}";
+                            }
+                            else
+                            {
+                                value = Math.Clamp(value, (double)rangeParam.MinValue, (double)rangeParam.MaxValue);
+                                valueTextBox.Text = $"{value:F0}";
+                                slider.Value = value;
+                            }
+                        };
+
+                        controlRow.Children.Add(slider);
+                        controlRow.Children.Add(textBoxBorder);
+                        controlRow.Children.Add(percentSymbol);
+                        sliderPanel.Children.Add(controlRow);
+                        return sliderPanel;
                     }
                     break;
             }
 
-            return panel;
+            return null;
         }
 
         private void ClearParametersPanel()

@@ -13,6 +13,6 @@ public interface IRGBEffect
 
 public class KeyboardState
 {
-    public Dictionary<ushort, float> PressedKeys { get; set; } = new();
+    public Dictionary<short, float> PressedKeys { get; set; } = new();
     public DateTime LastUpdate { get; set; }
 }

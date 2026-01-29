@@ -60,8 +60,6 @@ public class WootingKeyboardService : IKeyboardService
     public void SetFullKeyboard(KeyColour[,] colors)
     {
         if (!IsInitialized) return;
-        // print out array of colors for debugging
-        Debug.WriteLine(colors);
         RGBControl.SetFull(colors);
     }
 

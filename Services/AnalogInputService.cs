@@ -12,7 +12,6 @@ public class AnalogInputService
     {
         try
         {
-            // TODO: Replace with actual SDK initialization
             var (numDevices, error) = WootingAnalogSDK.Initialise();
             _isInitialized = error == WootingAnalogResult.Ok;
 
@@ -39,14 +38,13 @@ public class AnalogInputService
 
         try
         {
-            // TODO: Replace with actual SDK calls
             var (keys, readErr) = WootingAnalogSDK.ReadFullBuffer(20);
             if (readErr == WootingAnalogResult.Ok && keys.Count > 0)
             {
-                //foreach (var analog in keys)
-                //{
-                //    state.PressedKeys[analog.Item1] = analog.Item2;
-                //}
+                foreach (var analog in keys)
+                {
+                    state.PressedKeys[analog.Item1] = analog.Item2;
+                }
                 Debug.WriteLine($"Read {keys.Count} keys from keyboard state");
             }
         }
