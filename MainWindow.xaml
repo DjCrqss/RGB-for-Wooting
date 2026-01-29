@@ -5,43 +5,118 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WootingRGB"
         mc:Ignorable="d"
-        Title="Wooting RGB Controller" Height="600" Width="900"
+        Title="Wooting RGB Controller" Height="600" Width="750"
+        Background="#1E1E1E"
         Closing="Window_Closing">
-    <Grid Margin="10">
+    
+    <Window.Resources>
+        <!-- Modern Button Style -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#2D2D30"/>
+            <Setter Property="Foreground" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#3E3E42"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Effect Button Style -->
+        <Style x:Key="EffectButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
+            <Setter Property="Width" Value="145"/>
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <!-- Section Title Style -->
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="360"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Connection Status -->
-        <GroupBox Header="Keyboard Connection" Grid.Row="0" Margin="0,0,0,10">
-            <StackPanel Orientation="Horizontal" Margin="5">
-                <Button x:Name="ConnectButton" Content="Connect" Width="100" Height="30" Click="ConnectButton_Click" Margin="0,0,10,0"/>
-                <TextBlock x:Name="StatusText" Text="Not Connected" VerticalAlignment="Center" Margin="10,0,0,0" FontWeight="Bold"/>
-                <TextBlock x:Name="DeviceCountText" Text="" VerticalAlignment="Center" Margin="20,0,0,0"/>
-            </StackPanel>
-        </GroupBox>
-
-        <!-- Effect Selection -->
-        <GroupBox Header="RGB Effects" Grid.Row="1" Margin="0,0,0,10">
-            <StackPanel Margin="5">
-                <WrapPanel x:Name="EffectButtonsPanel" Margin="0,0,0,10">
-                    <!-- Effect buttons will be dynamically added here -->
-                </WrapPanel>
-                <TextBlock x:Name="EffectDescriptionText" Text="Select an effect to begin" 
-                           FontStyle="Italic" Foreground="Gray" Margin="0,5,0,0"/>
-            </StackPanel>
-        </GroupBox>
-
-        <!-- Effect Parameters -->
-        <GroupBox Header="Effect Settings" Grid.Row="2">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel x:Name="ParametersPanel" Margin="5">
-                    <TextBlock Text="No effect selected" FontStyle="Italic" Foreground="Gray" 
-                               x:Name="NoParametersText"/>
+        <!-- Left Panel Top Section - My Device -->
+        <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,20,0">
+            <TextBlock Text="MY DEVICE" Style="{StaticResource SectionTitle}"/>
+            <Border Background="#252526" CornerRadius="6" Padding="15" Margin="0,0,0,25">
+                <StackPanel>
+                    <Button x:Name="ConnectButton" 
+                            Content="Connect" 
+                            Style="{StaticResource ModernButton}"
+                            Click="ConnectButton_Click"
+                            HorizontalAlignment="Stretch"
+                            Margin="0,0,0,10"/>
+                    <TextBlock x:Name="StatusText" 
+                               Text="Not connected" 
+                               Foreground="#999999"
+                               FontSize="12"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="DeviceCountText" 
+                               Text="" 
+                               Foreground="#666666"
+                               FontSize="11"
+                               HorizontalAlignment="Center"
+                               Margin="0,5,0,0"/>
                 </StackPanel>
-            </ScrollViewer>
-        </GroupBox>
+            </Border>
+        </StackPanel>
+
+        <!-- Left Panel Bottom Section - Effect Selection -->
+        <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,20,0">
+            <TextBlock Text="EFFECT SELECTION" Style="{StaticResource SectionTitle}"/>
+            <Border Background="#252526" CornerRadius="6" Padding="15">
+                <UniformGrid x:Name="EffectButtonsPanel" Columns="2">
+                    <!-- Effect buttons will be dynamically added here -->
+                </UniformGrid>
+            </Border>
+        </StackPanel>
+
+        <!-- Right Panel - Effect Parameters (spans both rows) -->
+        <StackPanel Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
+            <TextBlock Text="EFFECT PARAMETERS" Style="{StaticResource SectionTitle}"/>
+            <Border x:Name="ParametersCard" Background="#252526" CornerRadius="6" Padding="20">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="ParametersPanel">
+                        <TextBlock Text="No effect selected" 
+                                   FontStyle="Italic" 
+                                   Foreground="#666666"
+                                   FontSize="13"
+                                   x:Name="NoParametersText"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </StackPanel>
     </Grid>
 </Window>

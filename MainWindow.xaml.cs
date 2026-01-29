@@ -44,10 +44,9 @@ namespace WootingRGB
                 var button = new Button
                 {
                     Content = effect.Name,
-                    Width = 120,
-                    Height = 40,
-                    Margin = new Thickness(5),
-                    Tag = effect
+                    Tag = effect,
+                    Style = (Style)FindResource("EffectButton"),
+                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"))
                 };
 
                 button.Click += EffectButton_Click;
@@ -65,7 +64,7 @@ namespace WootingRGB
                 if (kbSuccess && analogSuccess)
                 {
                     StatusText.Text = "Connected";
-                    StatusText.Foreground = new SolidColorBrush(Colors.Green);
+                    StatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4EC9B0"));
                     DeviceCountText.Text = $"{_keyboardService.DeviceCount} device(s) found";
                     ConnectButton.Content = "Disconnect";
                     EnableEffectButtons(true);
@@ -73,7 +72,7 @@ namespace WootingRGB
                 else
                 {
                     StatusText.Text = "Connection Failed";
-                    StatusText.Foreground = new SolidColorBrush(Colors.Red);
+                    StatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F48771"));
                     MessageBox.Show("Failed to connect to Wooting keyboard. Please ensure the device is connected.",
                         "Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
@@ -84,8 +83,8 @@ namespace WootingRGB
                 _analogInputService.Shutdown();
                 _keyboardService.Shutdown();
 
-                StatusText.Text = "Not Connected";
-                StatusText.Foreground = new SolidColorBrush(Colors.Black);
+                StatusText.Text = "Not connected";
+                StatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#999999"));
                 DeviceCountText.Text = "";
                 ConnectButton.Content = "Connect";
                 EnableEffectButtons(false);
@@ -109,14 +108,22 @@ namespace WootingRGB
             if (sender is Button button && button.Tag is IRGBEffect effect)
             {
                 _effectManager.SetEffect(effect);
-                EffectDescriptionText.Text = effect.Description;
 
-                // Highlight selected button
+                // Highlight selected button with yellow accent color and black text
                 foreach (var child in EffectButtonsPanel.Children)
                 {
                     if (child is Button btn)
                     {
-                        btn.Background = btn == button ? new SolidColorBrush(Colors.LightBlue) : null;
+                        if (btn == button)
+                        {
+                            btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFD45C"));
+                            btn.Foreground = new SolidColorBrush(Colors.Black);
+                        }
+                        else
+                        {
+                            btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"));
+                            btn.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+                        }
                     }
                 }
             }
@@ -146,13 +153,14 @@ namespace WootingRGB
 
         private UIElement? CreateParameterControl(IEffectParameter parameter)
         {
-            var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 15) };
+            var panel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
 
             var label = new TextBlock
             {
                 Text = parameter.DisplayName,
-                FontWeight = FontWeights.SemiBold,
-                Margin = new Thickness(0, 0, 0, 5)
+                FontSize = 13,
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
+                Margin = new Thickness(0, 0, 0, 8)
             };
             panel.Children.Add(label);
 
@@ -165,19 +173,21 @@ namespace WootingRGB
                         
                         var colorDisplay = new Border
                         {
-                            Width = 50,
-                            Height = 30,
+                            Width = 40,
+                            Height = 40,
                             Background = new SolidColorBrush(colorParam.ColorValue),
-                            BorderBrush = new SolidColorBrush(Colors.Black),
+                            CornerRadius = new CornerRadius(4),
+                            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")),
                             BorderThickness = new Thickness(1),
-                            Margin = new Thickness(0, 0, 10, 0)
+                            Margin = new Thickness(0, 0, 12, 0)
                         };
 
                         var colorButton = new Button
                         {
                             Content = "Choose Color",
-                            Width = 100,
-                            Height = 30
+                            Width = 120,
+                            Height = 40,
+                            Style = (Style)FindResource("ModernButton")
                         };
 
                         colorButton.Click += (s, e) =>
@@ -220,7 +230,9 @@ namespace WootingRGB
                         {
                             Text = $"{rangeParam.NumericValue:F0}",
                             HorizontalAlignment = HorizontalAlignment.Right,
-                            Margin = new Thickness(0, 0, 0, 3)
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#999999")),
+                            FontSize = 12,
+                            Margin = new Thickness(0, 0, 0, 5)
                         };
 
                         var slider = new Slider
@@ -229,7 +241,8 @@ namespace WootingRGB
                             Maximum = (double)rangeParam.MaxValue,
                             Value = rangeParam.NumericValue,
                             TickFrequency = 1,
-                            IsSnapToTickEnabled = true
+                            IsSnapToTickEnabled = true,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFD45C"))
                         };
 
                         slider.ValueChanged += (s, e) =>
