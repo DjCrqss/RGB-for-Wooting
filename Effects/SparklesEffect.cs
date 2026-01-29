@@ -1,0 +1,132 @@
+using System.Windows.Media;
+using WootingRGB.Core;
+using WootingRGB.Services;
+
+namespace WootingRGB.Effects;
+
+public class SparklesEffect : BaseRGBEffect
+{
+    private readonly IKeyboardService _keyboardService;
+    private readonly Random _random = new();
+    private readonly List<Sparkle> _sparkles = new();
+    private const int MaxRows = 6;
+    private const int MaxCols = 21;
+
+    public override string Name => "Sparkles";
+    public override string Description => "Random sparkling lights";
+
+    private class Sparkle
+    {
+        public byte Row { get; set; }
+        public byte Col { get; set; }
+        public Color Color { get; set; }
+        public double Lifetime { get; set; }
+        public double MaxLifetime { get; set; }
+    }
+
+    public SparklesEffect(IKeyboardService keyboardService)
+    {
+        _keyboardService = keyboardService;
+    }
+
+    protected override void InitializeParameters()
+    {
+        _parameters.Add(new ColorParameter(
+            "color1",
+            "Sparkle Color 1",
+            Colors.White
+        ));
+
+        _parameters.Add(new ColorParameter(
+            "color2",
+            "Sparkle Color 2",
+            Colors.Cyan
+        ));
+
+        _parameters.Add(new RangeParameter(
+            "density",
+            "Sparkle Density",
+            EffectParameterType.Intensity,
+            defaultValue: 20,
+            minValue: 1,
+            maxValue: 100
+        ));
+
+        _parameters.Add(new RangeParameter(
+            "speed",
+            "Fade Speed",
+            EffectParameterType.Speed,
+            defaultValue: 50,
+            minValue: 1,
+            maxValue: 100
+        ));
+    }
+
+    public override void Initialize()
+    {
+        base.Initialize();
+        _sparkles.Clear();
+    }
+
+    public override void Update(KeyboardState keyboardState)
+    {
+        var color1 = GetParameter<ColorParameter>("color1")?.ColorValue ?? Colors.White;
+        var color2 = GetParameter<ColorParameter>("color2")?.ColorValue ?? Colors.Cyan;
+        var density = GetParameter<RangeParameter>("density")?.NumericValue ?? 20;
+        var speed = GetParameter<RangeParameter>("speed")?.NumericValue ?? 50;
+
+        // Spawn new sparkles
+        if (_random.Next(100) < density)
+        {
+            _sparkles.Add(new Sparkle
+            {
+                Row = (byte)_random.Next(MaxRows),
+                Col = (byte)_random.Next(MaxCols),
+                Color = _random.Next(2) == 0 ? color1 : color2,
+                Lifetime = 0,
+                MaxLifetime = 0.5 + _random.NextDouble() * 0.5
+            });
+        }
+
+        // Clear keyboard
+        for (byte row = 0; row < MaxRows; row++)
+        {
+            for (byte col = 0; col < MaxCols; col++)
+            {
+                _keyboardService.SetKeyColor(row, col, 0, 0, 0);
+            }
+        }
+
+        // Update and draw sparkles
+        var deltaTime = 0.016 * (speed / 50.0); // Assuming ~60fps
+        for (int i = _sparkles.Count - 1; i >= 0; i--)
+        {
+            var sparkle = _sparkles[i];
+            sparkle.Lifetime += deltaTime;
+
+            if (sparkle.Lifetime >= sparkle.MaxLifetime)
+            {
+                _sparkles.RemoveAt(i);
+                continue;
+            }
+
+            var progress = sparkle.Lifetime / sparkle.MaxLifetime;
+            var brightness = Math.Sin(progress * Math.PI);
+
+            _keyboardService.SetKeyColor(
+                sparkle.Row,
+                sparkle.Col,
+                (byte)(sparkle.Color.R * brightness),
+                (byte)(sparkle.Color.G * brightness),
+                (byte)(sparkle.Color.B * brightness)
+            );
+        }
+
+        _keyboardService.UpdateKeyboard();
+    }
+
+    public override void Cleanup()
+    {
+        _sparkles.Clear();
+    }
+}

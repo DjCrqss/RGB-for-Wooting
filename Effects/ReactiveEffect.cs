@@ -1,0 +1,145 @@
+using System.Windows.Media;
+using WootingRGB.Core;
+using WootingRGB.Services;
+
+namespace WootingRGB.Effects;
+
+public class ReactiveEffect : BaseRGBEffect
+{
+    private readonly IKeyboardService _keyboardService;
+    private readonly Dictionary<(byte row, byte col), double> _keyIntensities = new();
+    private const int MaxRows = 6;
+    private const int MaxCols = 21;
+
+    public override string Name => "Reactive";
+    public override string Description => "Keys light up when pressed";
+
+    public ReactiveEffect(IKeyboardService keyboardService)
+    {
+        _keyboardService = keyboardService;
+    }
+
+    protected override void InitializeParameters()
+    {
+        _parameters.Add(new ColorParameter(
+            "pressColor",
+            "Press Color",
+            Colors.Magenta
+        ));
+
+        _parameters.Add(new ColorParameter(
+            "releaseColor",
+            "Release Color",
+            Colors.Purple
+        ));
+
+        _parameters.Add(new RangeParameter(
+            "fadeSpeed",
+            "Fade Speed",
+            EffectParameterType.Speed,
+            defaultValue: 50,
+            minValue: 1,
+            maxValue: 100
+        ));
+
+        _parameters.Add(new RangeParameter(
+            "sensitivity",
+            "Analog Sensitivity",
+            EffectParameterType.Intensity,
+            defaultValue: 50,
+            minValue: 1,
+            maxValue: 100
+        ));
+    }
+
+    public override void Initialize()
+    {
+        base.Initialize();
+        _keyIntensities.Clear();
+    }
+
+    public override void Update(KeyboardState keyboardState)
+    {
+        var pressColor = GetParameter<ColorParameter>("pressColor")?.ColorValue ?? Colors.Magenta;
+        var releaseColor = GetParameter<ColorParameter>("releaseColor")?.ColorValue ?? Colors.Purple;
+        var fadeSpeed = GetParameter<RangeParameter>("fadeSpeed")?.NumericValue ?? 50;
+        var sensitivity = GetParameter<RangeParameter>("sensitivity")?.NumericValue ?? 50;
+
+        var fadeRate = fadeSpeed / 1000.0;
+
+        // Update intensities based on pressed keys
+        foreach (var key in keyboardState.PressedKeys)
+        {
+            // TODO: Convert keycode to row/col
+            // For now, simulate with random positions
+            var row = (byte)(_random.Next(MaxRows));
+            var col = (byte)(_random.Next(MaxCols));
+            var pressure = Math.Min(key.Value * (sensitivity / 50.0), 1.0);
+            
+            _keyIntensities[(row, col)] = pressure;
+        }
+
+        // Fade out all keys
+        var keysToRemove = new List<(byte, byte)>();
+        foreach (var kvp in _keyIntensities.ToList())
+        {
+            var newIntensity = kvp.Value - fadeRate;
+            if (newIntensity <= 0)
+            {
+                keysToRemove.Add(kvp.Key);
+            }
+            else
+            {
+                _keyIntensities[kvp.Key] = newIntensity;
+            }
+        }
+
+        foreach (var key in keysToRemove)
+        {
+            _keyIntensities.Remove(key);
+        }
+
+        // Clear keyboard
+        for (byte row = 0; row < MaxRows; row++)
+        {
+            for (byte col = 0; col < MaxCols; col++)
+            {
+                _keyboardService.SetKeyColor(row, col, 0, 0, 0);
+            }
+        }
+
+        // Draw active keys
+        foreach (var kvp in _keyIntensities)
+        {
+            var intensity = kvp.Value;
+            var color = InterpolateColor(releaseColor, pressColor, intensity);
+
+            _keyboardService.SetKeyColor(
+                kvp.Key.row,
+                kvp.Key.col,
+                (byte)(color.R * intensity),
+                (byte)(color.G * intensity),
+                (byte)(color.B * intensity)
+            );
+        }
+
+        _keyboardService.UpdateKeyboard();
+    }
+
+    private readonly Random _random = new();
+
+    private Color InterpolateColor(Color start, Color end, double t)
+    {
+        t = Math.Clamp(t, 0, 1);
+        return Color.FromRgb(
+            (byte)(start.R + (end.R - start.R) * t),
+            (byte)(start.G + (end.G - start.G) * t),
+            (byte)(start.B + (end.B - start.B) * t)
+        );
+    }
+
+    public override void Cleanup()
+    {
+        _keyIntensities.Clear();
+    }
+}

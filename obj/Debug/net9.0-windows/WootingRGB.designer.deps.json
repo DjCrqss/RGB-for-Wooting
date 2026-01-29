@@ -1,0 +1,195 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "Google.Protobuf/3.31.1": {
+        "runtime": {
+          "lib/net5.0/Google.Protobuf.dll": {
+            "assemblyVersion": "3.31.1.0",
+            "fileVersion": "3.31.1.0"
+          }
+        }
+      },
+      "Grpc.Core.Api/2.71.0": {
+        "runtime": {
+          "lib/netstandard2.1/Grpc.Core.Api.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.71.0.0"
+          }
+        }
+      },
+      "Grpc.Net.Client/2.71.0": {
+        "dependencies": {
+          "Grpc.Net.Common": "2.71.0",
+          "Microsoft.Extensions.Logging.Abstractions": "6.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/Grpc.Net.Client.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.71.0.0"
+          }
+        }
+      },
+      "Grpc.Net.Common/2.71.0": {
+        "dependencies": {
+          "Grpc.Core.Api": "2.71.0"
+        },
+        "runtime": {
+          "lib/net8.0/Grpc.Net.Common.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.71.0.0"
+          }
+        }
+      },
+      "Microsoft.Extensions.Logging.Abstractions/6.0.0": {
+        "runtime": {
+          "lib/net6.0/Microsoft.Extensions.Logging.Abstractions.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "Newtonsoft.Json/12.0.2": {
+        "runtime": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.2.23222"
+          }
+        }
+      },
+      "RGB.NET.Core/3.1.0": {
+        "runtime": {
+          "lib/net9.0/RGB.NET.Core.dll": {
+            "assemblyVersion": "0.0.1.0",
+            "fileVersion": "0.0.1.0"
+          }
+        }
+      },
+      "RGB.NET.Devices.Wooting/3.1.0": {
+        "dependencies": {
+          "Google.Protobuf": "3.31.1",
+          "Grpc.Net.Client": "2.71.0",
+          "RGB.NET.Core": "3.1.0"
+        },
+        "runtime": {
+          "lib/net9.0/RGB.NET.Devices.Wooting.dll": {
+            "assemblyVersion": "0.0.1.0",
+            "fileVersion": "0.0.1.0"
+          }
+        }
+      },
+      "Wooting.NET/1.6.3": {
+        "runtime": {
+          "lib/netstandard2.0/Wooting.NET.dll": {
+            "assemblyVersion": "1.6.3.0",
+            "fileVersion": "1.6.3.0"
+          }
+        }
+      },
+      "WootingAnalogSDK.NET/0.5.0": {
+        "dependencies": {
+          "Newtonsoft.Json": "12.0.2"
+        },
+        "runtime": {
+          "lib/netstandard2.0/WootingAnalogSDK.NET.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/libwooting_analog_wrapper.so": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-x64/native/libwooting_analog_wrapper.dylib": {
+            "rid": "osx-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/win-x64/native/wooting_analog_wrapper.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Google.Protobuf/3.31.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-gSnJbUmGiOTdWddPhqzrEscHq9Ls6sqRDPB9WptckyjTUyx70JOOAaDLkFff8gManZNN3hllQ4aQInnQyq/Z/A==",
+      "path": "google.protobuf/3.31.1",
+      "hashPath": "google.protobuf.3.31.1.nupkg.sha512"
+    },
+    "Grpc.Core.Api/2.71.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QquqUC37yxsDzd1QaDRsH2+uuznWPTS8CVE2Yzwl3CvU4geTNkolQXoVN812M2IwT6zpv3jsZRc9ExJFNFslTg==",
+      "path": "grpc.core.api/2.71.0",
+      "hashPath": "grpc.core.api.2.71.0.nupkg.sha512"
+    },
+    "Grpc.Net.Client/2.71.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-U1vr20r5ngoT9nlb7wejF28EKN+taMhJsV9XtK9MkiepTZwnKxxiarriiMfCHuDAfPUm9XUjFMn/RIuJ4YY61w==",
+      "path": "grpc.net.client/2.71.0",
+      "hashPath": "grpc.net.client.2.71.0.nupkg.sha512"
+    },
+    "Grpc.Net.Common/2.71.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-v0c8R97TwRYwNXlC8GyRXwYTCNufpDfUtj9la+wUrZFzVWkFJuNAltU+c0yI3zu0jl54k7en6u2WKgZgd57r2Q==",
+      "path": "grpc.net.common/2.71.0",
+      "hashPath": "grpc.net.common.2.71.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Abstractions/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/HggWBbTwy8TgebGSX5DBZ24ndhzi93sHUBDvP1IxbZD7FDokYzdAr6+vbWGjw2XAfR2EJ1sfKUotpjHnFWPxA==",
+      "path": "microsoft.extensions.logging.abstractions/6.0.0",
+      "hashPath": "microsoft.extensions.logging.abstractions.6.0.0.nupkg.sha512"
+    },
+    "Newtonsoft.Json/12.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-rTK0s2EKlfHsQsH6Yx2smvcTCeyoDNgCW7FEYyV01drPlh2T243PR2DiDXqtC5N4GDm4Ma/lkxfW5a/4793vbA==",
+      "path": "newtonsoft.json/12.0.2",
+      "hashPath": "newtonsoft.json.12.0.2.nupkg.sha512"
+    },
+    "RGB.NET.Core/3.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-pFdRuqtZ9ZzuO/LgBLJsxC5tFhlMVufBEh21FoC3gUENAY02fEG1HiEcXSwkO3o9DOTtbUvraeCDB496Hn6rEQ==",
+      "path": "rgb.net.core/3.1.0",
+      "hashPath": "rgb.net.core.3.1.0.nupkg.sha512"
+    },
+    "RGB.NET.Devices.Wooting/3.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-uWMmJcGv0FnRIfRV/ZLjf8/GGgTASI5e/YRNGIbGGbcAOyyReoh5cSGpfQqV/rhjm/+lCZVkOKhrF2oL9qSyIw==",
+      "path": "rgb.net.devices.wooting/3.1.0",
+      "hashPath": "rgb.net.devices.wooting.3.1.0.nupkg.sha512"
+    },
+    "Wooting.NET/1.6.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-6yNtxNFLNT3MCPPSXDpV3P2PLyaE4NJW5JUoQ6Vddg0u4V0YZFG85KglY9cldHUzEofIGGPB8hqJzbsMg14z/g==",
+      "path": "wooting.net/1.6.3",
+      "hashPath": "wooting.net.1.6.3.nupkg.sha512"
+    },
+    "WootingAnalogSDK.NET/0.5.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-yoEZ2dJekN59pvwDCX4wxzKKhHJRZVcnUsx60LqBlHC96HOwHW5ZX7SlOZVlbkUQ6mkSFdmhOiCKJSKiLXvimw==",
+      "path": "wootinganalogsdk.net/0.5.0",
+      "hashPath": "wootinganalogsdk.net.0.5.0.nupkg.sha512"
+    }
+  }
+}
