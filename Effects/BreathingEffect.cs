@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
 
@@ -7,8 +8,6 @@ namespace WootingRGB.Effects;
 public class BreathingEffect : BaseRGBEffect
 {
     private readonly IKeyboardService _keyboardService;
-    private const int MaxRows = 6;
-    private const int MaxCols = 21;
 
     public override string Name => "Breathing";
     public override string Description => "Smooth breathing color transition";
@@ -44,6 +43,8 @@ public class BreathingEffect : BaseRGBEffect
 
     public override void Update(KeyboardState keyboardState)
     {
+        if (_colorBuffer == null) return;
+
         var color1 = GetParameter<ColorParameter>("color1")?.ColorValue ?? Colors.Red;
         var color2 = GetParameter<ColorParameter>("color2")?.ColorValue ?? Colors.Blue;
         var speed = GetParameter<RangeParameter>("speed")?.NumericValue ?? 50;
@@ -53,14 +54,15 @@ public class BreathingEffect : BaseRGBEffect
 
         var currentColor = InterpolateColor(color1, color2, cycle);
 
-        for (byte row = 0; row < MaxRows; row++)
+        for (int row = 0; row < MaxRows; row++)
         {
-            for (byte col = 0; col < MaxCols; col++)
+            for (int col = 0; col < MaxCols; col++)
             {
-                _keyboardService.SetKeyColor(row, col, currentColor.R, currentColor.G, currentColor.B);
+                _colorBuffer[row, col] = new KeyColour(currentColor.R, currentColor.G, currentColor.B);
             }
         }
 
+        _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
     }
 

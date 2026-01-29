@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using System.Windows.Media;
+using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
 
@@ -8,8 +8,6 @@ namespace WootingRGB.Effects;
 public class StaticColorEffect : BaseRGBEffect
 {
     private readonly IKeyboardService _keyboardService;
-    private int MaxRows;
-    private int MaxCols;
 
     public override string Name => "Static Color";
     public override string Description => "Solid color across all keys";
@@ -17,8 +15,6 @@ public class StaticColorEffect : BaseRGBEffect
     public StaticColorEffect(IKeyboardService keyboardService)
     {
         _keyboardService = keyboardService;
-        MaxRows = keyboardService.MaxRows;
-        MaxCols = keyboardService.MaxColumns;
     }
 
     protected override void InitializeParameters()
@@ -44,7 +40,7 @@ public class StaticColorEffect : BaseRGBEffect
         var colorParam = GetParameter<ColorParameter>("color");
         var brightness = GetParameter<RangeParameter>("brightness")?.NumericValue ?? 100;
 
-        if (colorParam == null) return;
+        if (colorParam == null || _colorBuffer == null) return;
 
         var color = colorParam.ColorValue;
         var brightnessMultiplier = brightness / 100.0;
@@ -53,14 +49,15 @@ public class StaticColorEffect : BaseRGBEffect
         var g = (byte)(color.G * brightnessMultiplier);
         var b = (byte)(color.B * brightnessMultiplier);
 
-        for (byte row = 0; row < MaxRows; row++)
+        for (int row = 0; row < MaxRows; row++)
         {
-            for (byte col = 0; col < MaxCols; col++)
+            for (int col = 0; col < MaxCols; col++)
             {
-                _keyboardService.SetKeyColor(row, col, r, g, b);
+                SetPixel(row, col, r, g, b);
             }
         }
 
+        _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
     }
 }

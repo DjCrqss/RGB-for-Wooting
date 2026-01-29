@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
 
@@ -7,8 +8,6 @@ namespace WootingRGB.Effects;
 public class RainbowEffect : BaseRGBEffect
 {
     private readonly IKeyboardService _keyboardService;
-    private const int MaxRows = 6;
-    private const int MaxCols = 21;
 
     public override string Name => "Rainbow Wave";
     public override string Description => "A flowing rainbow effect across the keyboard";
@@ -41,23 +40,26 @@ public class RainbowEffect : BaseRGBEffect
 
     public override void Update(KeyboardState keyboardState)
     {
+        if (_colorBuffer == null) return;
+
         var speed = GetParameter<RangeParameter>("speed")?.NumericValue ?? 50;
         var intensity = GetParameter<RangeParameter>("intensity")?.NumericValue ?? 100;
 
         var elapsed = (DateTime.Now - _startTime).TotalSeconds;
         var offset = elapsed * (speed / 10.0);
 
-        for (byte row = 0; row < MaxRows; row++)
+        for (int row = 0; row < MaxRows; row++)
         {
-            for (byte col = 0; col < MaxCols; col++)
+            for (int col = 0; col < MaxCols; col++)
             {
                 var hue = (col * 15 + row * 5 + offset * 30) % 360;
                 var color = HsvToRgb(hue, 1.0, intensity / 100.0);
                 
-                _keyboardService.SetKeyColor(row, col, color.R, color.G, color.B);
+                _colorBuffer[row, col] = new KeyColour(color.R, color.G, color.B);
             }
         }
 
+        _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
     }
 

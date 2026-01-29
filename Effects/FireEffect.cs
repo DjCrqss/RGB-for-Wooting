@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
 
@@ -8,9 +9,7 @@ public class FireEffect : BaseRGBEffect
 {
     private readonly IKeyboardService _keyboardService;
     private readonly Random _random = new();
-    private double[,] _heatMap;
-    private const int MaxRows = 6;
-    private const int MaxCols = 21;
+    private double[,]? _heatMap;
 
     public override string Name => "Fire";
     public override string Description => "Flickering fire effect";
@@ -18,7 +17,6 @@ public class FireEffect : BaseRGBEffect
     public FireEffect(IKeyboardService keyboardService)
     {
         _keyboardService = keyboardService;
-        _heatMap = new double[MaxRows, MaxCols];
     }
 
     protected override void InitializeParameters()
@@ -62,6 +60,8 @@ public class FireEffect : BaseRGBEffect
 
     public override void Update(KeyboardState keyboardState)
     {
+        if (_colorBuffer == null || _heatMap == null) return;
+
         var baseColor = GetParameter<ColorParameter>("baseColor")?.ColorValue ?? Colors.Orange;
         var tipColor = GetParameter<ColorParameter>("tipColor")?.ColorValue ?? Colors.Yellow;
         var intensity = GetParameter<RangeParameter>("intensity")?.NumericValue ?? 70;
@@ -93,17 +93,18 @@ public class FireEffect : BaseRGBEffect
         }
 
         // Apply colors based on heat
-        for (byte row = 0; row < MaxRows; row++)
+        for (int row = 0; row < MaxRows; row++)
         {
-            for (byte col = 0; col < MaxCols; col++)
+            for (int col = 0; col < MaxCols; col++)
             {
                 var heat = _heatMap[row, col];
                 var color = InterpolateColor(baseColor, tipColor, heat);
 
-                _keyboardService.SetKeyColor(row, col, color.R, color.G, color.B);
+                _colorBuffer[row, col] = new KeyColour(color.R, color.G, color.B);
             }
         }
 
+        _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
     }
 
@@ -119,6 +120,6 @@ public class FireEffect : BaseRGBEffect
 
     public override void Cleanup()
     {
-        _heatMap = new double[MaxRows, MaxCols];
+        _heatMap = null;
     }
 }

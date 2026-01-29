@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
 
@@ -9,16 +10,14 @@ public class SparklesEffect : BaseRGBEffect
     private readonly IKeyboardService _keyboardService;
     private readonly Random _random = new();
     private readonly List<Sparkle> _sparkles = new();
-    private const int MaxRows = 6;
-    private const int MaxCols = 21;
 
     public override string Name => "Sparkles";
     public override string Description => "Random sparkling lights";
 
     private class Sparkle
     {
-        public byte Row { get; set; }
-        public byte Col { get; set; }
+        public int Row { get; set; }
+        public int Col { get; set; }
         public Color Color { get; set; }
         public double Lifetime { get; set; }
         public double MaxLifetime { get; set; }
@@ -70,6 +69,8 @@ public class SparklesEffect : BaseRGBEffect
 
     public override void Update(KeyboardState keyboardState)
     {
+        if (_colorBuffer == null) return;
+
         var color1 = GetParameter<ColorParameter>("color1")?.ColorValue ?? Colors.White;
         var color2 = GetParameter<ColorParameter>("color2")?.ColorValue ?? Colors.Cyan;
         var density = GetParameter<RangeParameter>("density")?.NumericValue ?? 20;
@@ -80,22 +81,16 @@ public class SparklesEffect : BaseRGBEffect
         {
             _sparkles.Add(new Sparkle
             {
-                Row = (byte)_random.Next(MaxRows),
-                Col = (byte)_random.Next(MaxCols),
+                Row = _random.Next(MaxRows),
+                Col = _random.Next(MaxCols),
                 Color = _random.Next(2) == 0 ? color1 : color2,
                 Lifetime = 0,
                 MaxLifetime = 0.5 + _random.NextDouble() * 0.5
             });
         }
 
-        // Clear keyboard
-        for (byte row = 0; row < MaxRows; row++)
-        {
-            for (byte col = 0; col < MaxCols; col++)
-            {
-                _keyboardService.SetKeyColor(row, col, 0, 0, 0);
-            }
-        }
+        // Clear buffer
+        ClearBuffer();
 
         // Update and draw sparkles
         var deltaTime = 0.016 * (speed / 50.0); // Assuming ~60fps
@@ -113,15 +108,14 @@ public class SparklesEffect : BaseRGBEffect
             var progress = sparkle.Lifetime / sparkle.MaxLifetime;
             var brightness = Math.Sin(progress * Math.PI);
 
-            _keyboardService.SetKeyColor(
-                sparkle.Row,
-                sparkle.Col,
+            _colorBuffer[sparkle.Row, sparkle.Col] = new KeyColour(
                 (byte)(sparkle.Color.R * brightness),
                 (byte)(sparkle.Color.G * brightness),
                 (byte)(sparkle.Color.B * brightness)
             );
         }
 
+        _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
     }
 

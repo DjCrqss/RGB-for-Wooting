@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
 
@@ -9,8 +10,6 @@ public class RainEffect : BaseRGBEffect
     private readonly IKeyboardService _keyboardService;
     private readonly Random _random = new();
     private readonly List<Raindrop> _raindrops = new();
-    private const int MaxRows = 6;
-    private const int MaxCols = 21;
 
     public override string Name => "Rain";
     public override string Description => "Raindrops falling down the keyboard";
@@ -63,6 +62,8 @@ public class RainEffect : BaseRGBEffect
 
     public override void Update(KeyboardState keyboardState)
     {
+        if (_colorBuffer == null) return;
+
         var colorParam = GetParameter<ColorParameter>("color");
         var speed = GetParameter<RangeParameter>("speed")?.NumericValue ?? 50;
         var density = GetParameter<RangeParameter>("density")?.NumericValue ?? 30;
@@ -81,14 +82,8 @@ public class RainEffect : BaseRGBEffect
             });
         }
 
-        // Clear keyboard
-        for (byte row = 0; row < MaxRows; row++)
-        {
-            for (byte col = 0; col < MaxCols; col++)
-            {
-                _keyboardService.SetKeyColor(row, col, 0, 0, 0);
-            }
-        }
+        // Clear buffer
+        ClearBuffer();
 
         // Update and draw raindrops
         for (int i = _raindrops.Count - 1; i >= 0; i--)
@@ -102,18 +97,17 @@ public class RainEffect : BaseRGBEffect
                 continue;
             }
 
-            var row = (byte)drop.Row;
+            var row = (int)drop.Row;
             var intensity = 1.0 - (drop.Row - row);
 
-            _keyboardService.SetKeyColor(
-                row,
-                (byte)drop.Column,
+            _colorBuffer[row, drop.Column] = new KeyColour(
                 (byte)(drop.Color.R * intensity),
                 (byte)(drop.Color.G * intensity),
                 (byte)(drop.Color.B * intensity)
             );
         }
 
+        _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
     }
 

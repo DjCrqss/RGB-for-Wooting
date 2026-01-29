@@ -9,8 +9,7 @@ public interface IKeyboardService
 
     bool Initialize();
     void Shutdown();
-    void SetKeyColor(byte row, byte col, byte r, byte g, byte b);
-    void SetFullKeyboard(byte[,] colors);
+    void SetFullKeyboard(Wooting.KeyColour[,] colors);
     void UpdateKeyboard();
     void ResetKeyboard();
 }

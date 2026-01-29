@@ -1,4 +1,5 @@
 using System.Windows.Media;
+using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
 
@@ -7,9 +8,8 @@ namespace WootingRGB.Effects;
 public class ReactiveEffect : BaseRGBEffect
 {
     private readonly IKeyboardService _keyboardService;
-    private readonly Dictionary<(byte row, byte col), double> _keyIntensities = new();
-    private const int MaxRows = 6;
-    private const int MaxCols = 21;
+    private readonly Dictionary<(int row, int col), double> _keyIntensities = new();
+    private readonly Random _random = new();
 
     public override string Name => "Reactive";
     public override string Description => "Keys light up when pressed";
@@ -60,6 +60,8 @@ public class ReactiveEffect : BaseRGBEffect
 
     public override void Update(KeyboardState keyboardState)
     {
+        if (_colorBuffer == null) return;
+
         var pressColor = GetParameter<ColorParameter>("pressColor")?.ColorValue ?? Colors.Magenta;
         var releaseColor = GetParameter<ColorParameter>("releaseColor")?.ColorValue ?? Colors.Purple;
         var fadeSpeed = GetParameter<RangeParameter>("fadeSpeed")?.NumericValue ?? 50;
@@ -72,15 +74,15 @@ public class ReactiveEffect : BaseRGBEffect
         {
             // TODO: Convert keycode to row/col
             // For now, simulate with random positions
-            var row = (byte)(_random.Next(MaxRows));
-            var col = (byte)(_random.Next(MaxCols));
+            var row = _random.Next(MaxRows);
+            var col = _random.Next(MaxCols);
             var pressure = Math.Min(key.Value * (sensitivity / 50.0), 1.0);
             
             _keyIntensities[(row, col)] = pressure;
         }
 
         // Fade out all keys
-        var keysToRemove = new List<(byte, byte)>();
+        var keysToRemove = new List<(int, int)>();
         foreach (var kvp in _keyIntensities.ToList())
         {
             var newIntensity = kvp.Value - fadeRate;
@@ -99,14 +101,8 @@ public class ReactiveEffect : BaseRGBEffect
             _keyIntensities.Remove(key);
         }
 
-        // Clear keyboard
-        for (byte row = 0; row < MaxRows; row++)
-        {
-            for (byte col = 0; col < MaxCols; col++)
-            {
-                _keyboardService.SetKeyColor(row, col, 0, 0, 0);
-            }
-        }
+        // Clear buffer
+        ClearBuffer();
 
         // Draw active keys
         foreach (var kvp in _keyIntensities)
@@ -114,19 +110,16 @@ public class ReactiveEffect : BaseRGBEffect
             var intensity = kvp.Value;
             var color = InterpolateColor(releaseColor, pressColor, intensity);
 
-            _keyboardService.SetKeyColor(
-                kvp.Key.row,
-                kvp.Key.col,
+            _colorBuffer[kvp.Key.row, kvp.Key.col] = new KeyColour(
                 (byte)(color.R * intensity),
                 (byte)(color.G * intensity),
                 (byte)(color.B * intensity)
             );
         }
 
+        _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
     }
-
-    private readonly Random _random = new();
 
     private Color InterpolateColor(Color start, Color end, double t)
     {
