@@ -187,6 +187,13 @@ namespace WootingRGB
                                 Owner = this
                             };
 
+                            // Subscribe to live color changes
+                            dialog.ColorChanged += (sender, newColor) =>
+                            {
+                                colorParam.Value = newColor;
+                                colorDisplay.Background = new SolidColorBrush(newColor);
+                            };
+
                             if (dialog.ShowDialog() == true)
                             {
                                 colorParam.Value = dialog.SelectedColor;
