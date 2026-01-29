@@ -74,8 +74,8 @@ public class ReactiveEffect : BaseRGBEffect
         {
             // TODO: Convert keycode to row/col
             // For now, simulate with random positions
-            var row = _random.Next(MaxRows);
-            var col = _random.Next(MaxCols);
+            var row = _random.Next(_keyboardService.MaxRows);
+            var col = _random.Next(_keyboardService.MaxColumns);
             var pressure = Math.Min(key.Value * (sensitivity / 50.0), 1.0);
             
             _keyIntensities[(row, col)] = pressure;

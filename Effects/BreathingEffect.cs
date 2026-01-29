@@ -54,9 +54,9 @@ public class BreathingEffect : BaseRGBEffect
 
         var currentColor = InterpolateColor(color1, color2, cycle);
 
-        for (int row = 0; row < MaxRows; row++)
+        for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
-            for (int col = 0; col < MaxCols; col++)
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
                 _colorBuffer[row, col] = new KeyColour(currentColor.R, currentColor.G, currentColor.B);
             }

@@ -55,7 +55,7 @@ public class FireEffect : BaseRGBEffect
     public override void Initialize()
     {
         base.Initialize();
-        _heatMap = new double[MaxRows, MaxCols];
+        _heatMap = new double[_keyboardService.MaxRows, _keyboardService.MaxColumns];
     }
 
     public override void Update(KeyboardState keyboardState)
@@ -70,21 +70,21 @@ public class FireEffect : BaseRGBEffect
         var speedMultiplier = speed / 50.0;
 
         // Generate heat at bottom
-        for (int col = 0; col < MaxCols; col++)
+        for (int col = 0; col < _keyboardService.MaxColumns; col++)
         {
-            _heatMap[MaxRows - 1, col] = _random.NextDouble() * intensity / 100.0;
+            _heatMap[_keyboardService.MaxRows - 1, col] = _random.NextDouble() * intensity / 100.0;
         }
 
         // Propagate heat upward
-        for (int row = 0; row < MaxRows - 1; row++)
+        for (int row = 0; row < _keyboardService.MaxRows - 1; row++)
         {
-            for (int col = 0; col < MaxCols; col++)
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
                 var heat = _heatMap[row + 1, col];
                 
                 if (col > 0)
                     heat += _heatMap[row + 1, col - 1] * 0.1;
-                if (col < MaxCols - 1)
+                if (col < _keyboardService.MaxColumns - 1)
                     heat += _heatMap[row + 1, col + 1] * 0.1;
 
                 heat = heat * 0.85 * speedMultiplier;
@@ -93,9 +93,9 @@ public class FireEffect : BaseRGBEffect
         }
 
         // Apply colors based on heat
-        for (int row = 0; row < MaxRows; row++)
+        for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
-            for (int col = 0; col < MaxCols; col++)
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
                 var heat = _heatMap[row, col];
                 var color = InterpolateColor(baseColor, tipColor, heat);

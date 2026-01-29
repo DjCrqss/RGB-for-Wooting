@@ -48,9 +48,9 @@ public class RainbowEffect : BaseRGBEffect
         var elapsed = (DateTime.Now - _startTime).TotalSeconds;
         var offset = elapsed * (speed / 10.0);
 
-        for (int row = 0; row < MaxRows; row++)
+        for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
-            for (int col = 0; col < MaxCols; col++)
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
                 var hue = (col * 15 + row * 5 + offset * 30) % 360;
                 var color = HsvToRgb(hue, 1.0, intensity / 100.0);

@@ -81,8 +81,8 @@ public class SparklesEffect : BaseRGBEffect
         {
             _sparkles.Add(new Sparkle
             {
-                Row = _random.Next(MaxRows),
-                Col = _random.Next(MaxCols),
+                Row = _random.Next(_keyboardService.MaxRows),
+                Col = _random.Next(_keyboardService.MaxColumns),
                 Color = _random.Next(2) == 0 ? color1 : color2,
                 Lifetime = 0,
                 MaxLifetime = 0.5 + _random.NextDouble() * 0.5

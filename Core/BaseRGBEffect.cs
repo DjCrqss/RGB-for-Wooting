@@ -8,8 +8,6 @@ public abstract class BaseRGBEffect : IRGBEffect
     protected List<IEffectParameter> _parameters = new();
     protected DateTime _startTime;
     protected KeyColour[,]? _colorBuffer;
-    protected int MaxRows;
-    protected int MaxCols;
     
     public abstract string Name { get; }
     public abstract string Description { get; }
@@ -41,9 +39,7 @@ public abstract class BaseRGBEffect : IRGBEffect
 
     protected void InitializeColorBuffer()
     {
-        MaxRows = RGBControl.MaxRGBRows;
-        MaxCols = RGBControl.MaxRGBCols;
-        _colorBuffer = new KeyColour[MaxRows, MaxCols];
+        _colorBuffer = new KeyColour[RGBControl.MaxRGBRows, RGBControl.MaxRGBCols];
     }
 
     protected void SetPixel(int row, int col, byte r, byte g, byte b)
@@ -56,9 +52,9 @@ public abstract class BaseRGBEffect : IRGBEffect
     {
         if (_colorBuffer == null) return;
         
-        for (int row = 0; row < MaxRows; row++)
+        for (int row = 0; row < RGBControl.MaxRGBRows; row++)
         {
-            for (int col = 0; col < MaxCols; col++)
+            for (int col = 0; col < RGBControl.MaxRGBCols; col++)
             {
                 _colorBuffer[row, col] = new KeyColour(0, 0, 0);
             }

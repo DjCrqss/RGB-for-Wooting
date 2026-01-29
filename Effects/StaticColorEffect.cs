@@ -49,9 +49,9 @@ public class StaticColorEffect : BaseRGBEffect
         var g = (byte)(color.G * brightnessMultiplier);
         var b = (byte)(color.B * brightnessMultiplier);
 
-        for (int row = 0; row < MaxRows; row++)
+        for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
-            for (int col = 0; col < MaxCols; col++)
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
                 SetPixel(row, col, r, g, b);
             }

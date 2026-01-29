@@ -10,6 +10,15 @@ All effects use **direct KeyColour array manipulation** with a single SDK call p
 - Single `SetFull()` + `UpdateKeyboard()` call per frame
 - Smooth 60fps animations
 
+## Understanding Buffer vs Device Dimensions
+
+**Important:** There's a distinction between buffer size and actual keyboard dimensions:
+
+- **`RGBControl.MaxRGBRows/MaxRGBCols`**: Buffer dimensions (e.g., 6x21) - ensures LEDs are positioned correctly
+- **`IKeyboardService.MaxRows/MaxColumns`**: Actual device dimensions (may be smaller, e.g., 6x17 for 60HE)
+
+**Effects should use `_keyboardService.MaxRows` and `_keyboardService.MaxColumns`** for positioning logic (rain, fire, etc.). The unused portion of the buffer doesn't need to be set and won't affect the keyboard.
+
 ## Adding a New RGB Effect
 
 To create a new RGB effect:
@@ -56,13 +65,6 @@ public class WaveEffect : BaseRGBEffect
         ));
     }
 
-    public override void Initialize()
-    {
-        base.Initialize();
-        // Initialize color buffer with keyboard dimensions
-        InitializeColorBuffer(_keyboardService.MaxRows, _keyboardService.MaxColumns);
-    }
-
     public override void Update(KeyboardState keyboardState)
     {
         if (_colorBuffer == null) return;
@@ -70,10 +72,10 @@ public class WaveEffect : BaseRGBEffect
         var color = GetParameter<ColorParameter>("waveColor")?.ColorValue ?? Colors.Blue;
         var speed = GetParameter<RangeParameter>("speed")?.NumericValue ?? 50;
 
-        // Fill the KeyColour array directly
-        for (int row = 0; row < MaxRows; row++)
+        // Use actual keyboard dimensions from the service
+        for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
-            for (int col = 0; col < MaxCols; col++)
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
                 // Your effect logic here
                 _colorBuffer[row, col] = new KeyColour(color.R, color.G, color.B);
@@ -95,27 +97,28 @@ _availableEffects.Add(new WaveEffect(_keyboardService));
 
 ## BaseRGBEffect Helper Methods
 
-### `InitializeColorBuffer(int rows, int cols)`
-Creates the `KeyColour[,]` buffer and sets `MaxRows`/`MaxCols`.
+### `InitializeColorBuffer()`
+Called automatically by base `Initialize()`. Creates `KeyColour[RGBControl.MaxRGBRows, RGBControl.MaxRGBCols]` buffer.
 
 ### `SetPixel(int row, int col, byte r, byte g, byte b)`
 Helper to set a single key in the buffer (creates KeyColour internally).
 
 ### `ClearBuffer()`
-Sets all keys to black (0, 0, 0).
+Sets all keys in the entire buffer to black (0, 0, 0).
 
 ### `_colorBuffer`
-Direct access to `KeyColour[MaxRows, MaxCols]` array.
+Direct access to `KeyColour[RGBControl.MaxRGBRows, RGBControl.MaxRGBCols]` array.
 
-### `MaxRows` / `MaxCols`
-Protected fields with keyboard dimensions.
+### `_keyboardService.MaxRows` / `_keyboardService.MaxColumns`
+**Use these for effect logic** - actual keyboard dimensions.
 
 ## Example: Setting All Keys to Red
 
 ```csharp
-for (int row = 0; row < MaxRows; row++)
+// Use keyboard service dimensions, not buffer dimensions
+for (int row = 0; row < _keyboardService.MaxRows; row++)
 {
-    for (int col = 0; col < MaxCols; col++)
+    for (int col = 0; col < _keyboardService.MaxColumns; col++)
     {
         _colorBuffer[row, col] = new KeyColour(255, 0, 0);
     }
@@ -129,6 +132,7 @@ _keyboardService.UpdateKeyboard();
 ? **Maximum Performance**: Direct KeyColour array with no conversions  
 ? **Simple & Clean**: No byte array indexing math  
 ? **Type Safe**: Compile-time checking with KeyColour struct  
+? **Device Aware**: Uses actual keyboard dimensions for positioning  
 ? **Modular**: Each effect is self-contained  
 ? **Expandable**: Add effects without modifying existing code  
 ? **Customizable**: Effects declare their own parameters  

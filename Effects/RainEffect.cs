@@ -75,7 +75,7 @@ public class RainEffect : BaseRGBEffect
         {
             _raindrops.Add(new Raindrop
             {
-                Column = _random.Next(MaxCols),
+                Column = _random.Next(_keyboardService.MaxColumns),
                 Row = 0,
                 Color = colorParam.ColorValue,
                 Speed = speed / 20.0
@@ -91,7 +91,7 @@ public class RainEffect : BaseRGBEffect
             var drop = _raindrops[i];
             drop.Row += drop.Speed;
 
-            if (drop.Row >= MaxRows)
+            if (drop.Row >= _keyboardService.MaxRows)
             {
                 _raindrops.RemoveAt(i);
                 continue;
