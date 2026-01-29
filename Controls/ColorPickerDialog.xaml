@@ -1,27 +1,33 @@
 <Window x:Class="WootingRGB.Controls.ColorPickerDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Height="460" Width="380"
+        Height="380" Width="260"
         WindowStartupLocation="CenterOwner"
         WindowStyle="None"
         AllowsTransparency="True"
         ResizeMode="NoResize"
         Background="Transparent">
-    
+
     <Window.Resources>
         <!-- Hue Slider Style -->
         <Style x:Key="HueSliderStyle" TargetType="Slider">
+            <Setter Property="IsMoveToPointEnabled" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Slider">
                         <Grid>
                             <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Opacity="0" Command="Slider.DecreaseLarge"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Opacity="0" Command="Slider.IncreaseLarge"/>
+                                </Track.IncreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb Width="20" Height="20" Background="White" 
-                                           BorderBrush="#888888" BorderThickness="2">
+                                    <Thumb Width="14" Height="14">
                                         <Thumb.Template>
                                             <ControlTemplate>
-                                                <Ellipse Fill="White" Stroke="#888888" StrokeThickness="3"/>
+                                                <Ellipse Fill="White" Stroke="#888888" StrokeThickness="2"/>
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -33,41 +39,39 @@
             </Setter>
         </Style>
 
-        <!-- Modern Button Style -->
-        <Style x:Key="ModernButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#404040"/>
-            <Setter Property="Foreground" Value="White"/>
+        <!-- Recent Color Button Style -->
+        <Style x:Key="RecentColorButtonStyle" TargetType="Button">
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="4" Padding="5">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                CornerRadius="14"
+                                BorderBrush="#555555"
+                                BorderThickness="1">
+                            <ContentPresenter/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#505050"/>
-                </Trigger>
-            </Style.Triggers>
         </Style>
     </Window.Resources>
-    
-    <Border Background="#2B2B2B" CornerRadius="8" BorderBrush="#404040" BorderThickness="1">
-        <Grid Margin="20">
+
+    <Border Background="#2B2B2B" CornerRadius="8" BorderBrush="#404040" BorderThickness="1" Margin="0,0,0,-60">
+        <Grid Margin="15">
             <Grid.RowDefinitions>
-                <RowDefinition Height="280"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="190"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- 2D Color Canvas -->
-            <Border Grid.Row="0" BorderBrush="#404040" BorderThickness="1" CornerRadius="8" Margin="0,0,0,15">
+            <Border Grid.Row="0" BorderBrush="#404040" BorderThickness="1" CornerRadius="6" Margin="0,0,0,10">
                 <Grid x:Name="ColorCanvas" 
                       Background="Transparent"
                       MouseLeftButtonDown="ColorCanvas_MouseDown" 
@@ -90,16 +94,16 @@
                         </Rectangle.Fill>
                     </Rectangle>
                     <!-- Picker Circle -->
-                    <Ellipse x:Name="PickerCircle" Width="16" Height="16" 
-                             Stroke="White" StrokeThickness="2" 
+                    <Ellipse x:Name="PickerCircle" Width="12" Height="12" 
+                             Stroke="White" StrokeThickness="1.5" 
                              IsHitTestVisible="False"
                              HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 </Grid>
             </Border>
 
             <!-- Hue Slider -->
-            <Grid Grid.Row="1" Height="30" Margin="0,0,0,15">
-                <Border CornerRadius="15" Height="12">
+            <Grid Grid.Row="1" Height="22" Margin="0,0,0,10">
+                <Border CornerRadius="6" Height="12">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
                             <GradientStop Color="#FF0000" Offset="0.00"/>
@@ -119,35 +123,25 @@
             </Grid>
 
             <!-- Hex Input -->
-            <Grid Grid.Row="2" Margin="0,0,0,15">
+            <Grid Grid.Row="2" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="HEX" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="12"/>
-                <Border Grid.Column="1" Background="#404040" CornerRadius="4" Padding="10,8">
+                <TextBlock Text="HEX" Foreground="#AAAAAA" VerticalAlignment="Center" Margin="8,0,0,0" FontSize="10"/>
+                <Border Grid.Column="1" Background="#404040" CornerRadius="3" Padding="8,6" Margin="10,0,0,0">
                     <TextBox x:Name="HexTextBox" Background="Transparent" Foreground="White" 
-                             BorderThickness="0" FontFamily="Consolas" FontSize="14"
+                             BorderThickness="0" FontFamily="Consolas" FontSize="11"
                              TextChanged="HexTextBox_TextChanged"/>
                 </Border>
             </Grid>
 
             <!-- Recently Used -->
-            <StackPanel Grid.Row="3" Margin="0,0,0,15">
-                <TextBlock Text="RECENTLY USED" Foreground="#AAAAAA" FontSize="11" Margin="0,0,0,10"/>
-                <UniformGrid x:Name="RecentColorsGrid" Rows="2" Columns="6">
+            <StackPanel Grid.Row="3">
+                <TextBlock Text="RECENTLY USED" Foreground="#AAAAAA" FontSize="9" Margin="0,0,0,6"/>
+                <UniformGrid x:Name="RecentColorsGrid" Rows="2" Columns="6" Height="75">
                     <!-- Recent colors will be added here programmatically -->
                 </UniformGrid>
-            </StackPanel>
-
-            <!-- Buttons -->
-            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="OK" Width="80" Height="32" 
-                        Click="OkButton_Click" Margin="0,0,10,0"
-                        Style="{StaticResource ModernButtonStyle}"/>
-                <Button Content="Cancel" Width="80" Height="32" 
-                        Click="CancelButton_Click"
-                        Style="{StaticResource ModernButtonStyle}"/>
             </StackPanel>
         </Grid>
     </Border>

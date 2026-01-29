@@ -194,11 +194,12 @@ namespace WootingRGB
                                 colorDisplay.Background = new SolidColorBrush(newColor);
                             };
 
-                            if (dialog.ShowDialog() == true)
-                            {
-                                colorParam.Value = dialog.SelectedColor;
-                                colorDisplay.Background = new SolidColorBrush(dialog.SelectedColor);
-                            }
+                            // Show dialog - no need to check DialogResult anymore
+                            dialog.ShowDialog();
+                            
+                            // Apply final color when closed
+                            colorParam.Value = dialog.SelectedColor;
+                            colorDisplay.Background = new SolidColorBrush(dialog.SelectedColor);
                         };
 
                         colorPanel.Children.Add(colorDisplay);

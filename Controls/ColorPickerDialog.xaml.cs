@@ -34,15 +34,29 @@ public partial class ColorPickerDialog : Window
         _updating = false;
         
         UpdateHueGradient();
-        UpdatePickerPosition();
         UpdateHexBox();
         LoadRecentColors();
+
+        // Update picker position after the window is loaded and rendered
+        this.Loaded += (s, e) =>
+        {
+            UpdatePickerPosition();
+        };
 
         // Make window close when clicking outside
         this.Deactivated += (s, e) => 
         {
             if (this.IsActive == false)
+            {
+                AddToRecentColors(SelectedColor);
                 Close();
+            }
+        };
+        
+        // Also save when window closes
+        this.Closing += (s, e) =>
+        {
+            AddToRecentColors(SelectedColor);
         };
     }
 
@@ -61,6 +75,9 @@ public partial class ColorPickerDialog : Window
         if (e.LeftButton == MouseButtonState.Pressed && _isDraggingCanvas && sender is Grid grid)
         {
             UpdateFromCanvasPosition(e.GetPosition(grid));
+            
+            // Notify color changed for live preview while dragging
+            ColorChanged?.Invoke(this, SelectedColor);
         }
     }
 
@@ -137,7 +154,6 @@ public partial class ColorPickerDialog : Window
             
             UpdateHueGradient();
             UpdatePickerPosition();
-            UpdateHexBox();
             
             // Notify color changed for live preview
             ColorChanged?.Invoke(this, SelectedColor);
@@ -159,8 +175,8 @@ public partial class ColorPickerDialog : Window
     private void UpdatePickerPosition()
     {
         var canvas = ColorCanvas;
-        var x = _saturation * canvas.ActualWidth - 8;
-        var y = (1 - _value) * canvas.ActualHeight - 8;
+        var x = _saturation * canvas.ActualWidth - 6;  // Half of 12px width
+        var y = (1 - _value) * canvas.ActualHeight - 6; // Half of 12px height
         
         PickerCircle.Margin = new Thickness(x, y, 0, 0);
     }
@@ -181,10 +197,8 @@ public partial class ColorPickerDialog : Window
             var button = new Button
             {
                 Background = new SolidColorBrush(color),
-                BorderThickness = new Thickness(0),
-                Margin = new Thickness(2),
                 Tag = color,
-                Cursor = Cursors.Hand
+                Style = (Style)FindResource("RecentColorButtonStyle")
             };
             
             button.Click += RecentColor_Click;
@@ -197,9 +211,8 @@ public partial class ColorPickerDialog : Window
             var emptyButton = new Button
             {
                 Background = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-                BorderThickness = new Thickness(0),
-                Margin = new Thickness(2),
-                IsEnabled = false
+                IsEnabled = false,
+                Style = (Style)FindResource("RecentColorButtonStyle")
             };
             RecentColorsGrid.Children.Add(emptyButton);
         }
@@ -227,24 +240,15 @@ public partial class ColorPickerDialog : Window
 
     private static void AddToRecentColors(Color color)
     {
+        // Remove if already exists
         RecentColors.Remove(color);
+        
+        // Add to front
         RecentColors.Insert(0, color);
         
+        // Keep only max colors
         if (RecentColors.Count > MaxRecentColors)
             RecentColors.RemoveAt(MaxRecentColors);
-    }
-
-    private void OkButton_Click(object sender, RoutedEventArgs e)
-    {
-        AddToRecentColors(SelectedColor);
-        DialogResult = true;
-        Close();
-    }
-
-    private void CancelButton_Click(object sender, RoutedEventArgs e)
-    {
-        DialogResult = false;
-        Close();
     }
 
     private static (double h, double s, double v) RgbToHsv(Color color)
