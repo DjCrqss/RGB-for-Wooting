@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows.Media;
 using Wooting;
 using WootingRGB.Core;
@@ -10,6 +11,8 @@ public class FireEffect : BaseRGBEffect
     private readonly IKeyboardService _keyboardService;
     private readonly Random _random = new();
     private double[,]? _heatMap;
+    private double[]? _noiseOffsets;
+    private double _time = 0;
 
     public override string Name => "Fire";
     public override string Description => "Flickering fire effect";
@@ -22,33 +25,33 @@ public class FireEffect : BaseRGBEffect
     protected override void InitializeParameters()
     {
         _parameters.Add(new ColorParameter(
-            "baseColor",
-            "Base Color",
-            Colors.Orange
+            "coldColor",
+            "Cold Color",
+            Colors.Red
         ));
 
         _parameters.Add(new ColorParameter(
-            "tipColor",
-            "Flame Tip Color",
+            "hotColor",
+            "Hot Color",
             Colors.Yellow
         ));
 
         _parameters.Add(new RangeParameter(
-            "intensity",
-            "Intensity",
-            EffectParameterType.Intensity,
-            defaultValue: 70,
-            minValue: 0,
-            maxValue: 100
+            "height",
+            "Flame Height",
+            EffectParameterType.Size,
+            defaultValue: 25.0,
+            minValue: 10.0,
+            maxValue: 50.0
         ));
 
         _parameters.Add(new RangeParameter(
             "speed",
-            "Flicker Speed",
+            "Animation Speed",
             EffectParameterType.Speed,
-            defaultValue: 50,
+            defaultValue: 10,
             minValue: 1,
-            maxValue: 100
+            maxValue: 20
         ));
     }
 
@@ -56,49 +59,80 @@ public class FireEffect : BaseRGBEffect
     {
         base.Initialize();
         _heatMap = new double[_keyboardService.MaxRows, _keyboardService.MaxColumns];
+        _noiseOffsets = new double[_keyboardService.MaxColumns];
+        
+        // Initialize random noise offsets for each column
+        for (int col = 0; col < _keyboardService.MaxColumns; col++)
+        {
+            _noiseOffsets[col] = _random.NextDouble() * 100;
+        }
+        
+        _time = 0;
     }
 
     public override void Update(KeyboardState keyboardState)
     {
-        if (_colorBuffer == null || _heatMap == null) return;
+        if (_colorBuffer == null || _heatMap == null || _noiseOffsets == null) return;
 
-        var baseColor = GetParameter<ColorParameter>("baseColor")?.ColorValue ?? Colors.Orange;
-        var tipColor = GetParameter<ColorParameter>("tipColor")?.ColorValue ?? Colors.Yellow;
-        var intensity = GetParameter<RangeParameter>("intensity")?.NumericValue ?? 70;
-        var speed = GetParameter<RangeParameter>("speed")?.NumericValue ?? 50;
+        var coldColor = GetParameter<ColorParameter>("coldColor")?.ColorValue ?? Colors.Red;
+        var hotColor = GetParameter<ColorParameter>("hotColor")?.ColorValue ?? Colors.Yellow;
+        var height = GetParameter<RangeParameter>("height")?.NumericValue ?? 25.0;
+        var speed = GetParameter<RangeParameter>("speed")?.NumericValue ?? 10;
 
-        var speedMultiplier = speed / 50.0;
+        _time += speed * 0.01;
 
-        // Generate heat at bottom
         for (int col = 0; col < _keyboardService.MaxColumns; col++)
         {
-            _heatMap[_keyboardService.MaxRows - 1, col] = _random.NextDouble() * intensity / 100.0;
+            // Create smooth noise using sine waves
+            var noiseValue = Math.Sin(_time + _noiseOffsets[col]) * 0.5 + 0.5; // 0 to 1
+            var noiseValue2 = Math.Sin(_time * 1.7 + _noiseOffsets[col] * 0.7) * 0.5 + 0.5;
+            var combinedNoise = (noiseValue * 0.6 + noiseValue2 * 0.4);
+            
+            // Set base heat (0.5 to 1.0)
+            _heatMap[_keyboardService.MaxRows - 1, col] = 0.5 + combinedNoise * 0.5;
         }
 
-        // Propagate heat upward
-        for (int row = 0; row < _keyboardService.MaxRows - 1; row++)
+
+        // Propagate heat upward with cooling
+        for (int row = _keyboardService.MaxRows - 2; row >= 0; row--)
         {
             for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
-                var heat = _heatMap[row + 1, col];
+                var heatBelow = _heatMap[row + 1, col];
                 
-                if (col > 0)
-                    heat += _heatMap[row + 1, col - 1] * 0.1;
-                if (col < _keyboardService.MaxColumns - 1)
-                    heat += _heatMap[row + 1, col + 1] * 0.1;
-
-                heat = heat * 0.85 * speedMultiplier;
-                _heatMap[row, col] = Math.Clamp(heat + (_random.NextDouble() - 0.5) * 0.1, 0, 1);
+                // propagate if heat below is above threshold
+                if (heatBelow > 0.25)
+                {
+                    _heatMap[row, col] = (heatBelow - ((50 - height) * 0.01));
+                }
+                else
+                {
+                    // cool in place
+                    _heatMap[row, col] = _heatMap[row, col] * 0.85;
+                }
+                
+                _heatMap[row, col] = Math.Clamp(_heatMap[row, col], 0, 1);
             }
         }
 
-        // Apply colors based on heat
+        // Apply gradient with smooth fade to black
         for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
             for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
                 var heat = _heatMap[row, col];
-                var color = InterpolateColor(baseColor, tipColor, heat);
+                
+                Color color;
+                if (heat < 0.25)
+                {
+                    var fadeProgress = heat / 0.25; // 0 to 1
+                    color = InterpolateColor(Colors.Black, coldColor, fadeProgress);
+                }
+                else
+                {
+                    var flameProgress = (heat - 0.25) / 0.75; // 0 to 1
+                    color = InterpolateColor(coldColor, hotColor, flameProgress);
+                }
 
                 _colorBuffer[row, col] = new KeyColour(color.R, color.G, color.B);
             }
@@ -108,10 +142,10 @@ public class FireEffect : BaseRGBEffect
         _keyboardService.UpdateKeyboard();
     }
 
-    private (byte R, byte G, byte B) InterpolateColor(Color start, Color end, double t)
+    private Color InterpolateColor(Color start, Color end, double t)
     {
         t = Math.Clamp(t, 0, 1);
-        return (
+        return Color.FromRgb(
             (byte)(start.R + (end.R - start.R) * t),
             (byte)(start.G + (end.G - start.G) * t),
             (byte)(start.B + (end.B - start.B) * t)
@@ -121,5 +155,6 @@ public class FireEffect : BaseRGBEffect
     public override void Cleanup()
     {
         _heatMap = null;
+        _noiseOffsets = null;
     }
 }

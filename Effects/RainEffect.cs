@@ -40,7 +40,7 @@ public class RainEffect : BaseRGBEffect
             "speed",
             "Fall Speed",
             EffectParameterType.Speed,
-            defaultValue: 10,
+            defaultValue: 4,
             minValue: 1,
             maxValue: 20
         ));
@@ -58,9 +58,9 @@ public class RainEffect : BaseRGBEffect
             "trailLength",
             "Trail Length",
             EffectParameterType.Size,
-            defaultValue: 50,
+            defaultValue: 200,
             minValue: 10,
-            maxValue: 100
+            maxValue: 400
         ));
 
         _parameters.Add(new RangeParameter(
