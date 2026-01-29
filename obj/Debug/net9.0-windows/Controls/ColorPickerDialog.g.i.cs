@@ -108,7 +108,7 @@ namespace WootingRGB.Controls {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/WootingRGB;component/controls/colorpickerdialog.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/WootingRGB;V1.0.0.0;component/controls/colorpickerdialog.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Controls\ColorPickerDialog.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);
