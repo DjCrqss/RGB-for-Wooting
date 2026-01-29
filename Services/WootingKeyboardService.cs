@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Wooting;
+using static Wooting.WootingKey;
 
 namespace WootingRGB.Services;
 
@@ -10,8 +11,9 @@ public class WootingKeyboardService : IKeyboardService
     public bool IsInitialized { get; private set; }
     public int DeviceCount { get; private set; }
 
-    private const int MaxRows = 6;
-    private const int MaxCols = 21;
+    public int MaxRows { get; private set; }
+
+    public int MaxColumns { get; private set; }
 
     public bool Initialize()
     {
@@ -37,14 +39,19 @@ public class WootingKeyboardService : IKeyboardService
 
             var count = RGBControl.GetDeviceCount();
             var infos = new RGBDeviceInfo[count];
+
             for (byte i = 0; i < count; i++)
             {
                 RGBControl.SetControlDevice(i);
                 var device = RGBControl.GetDeviceInfo();
                 Debug.WriteLine($"Found device: Connected: {device.Connected}, Model: {device.Model}, Type: {device.DeviceType}, Max Rows: {device.MaxRows}, Max Cols: {device.MaxColumns}, Max Keycode: {device.KeycodeLimit}");
+                MaxColumns = device.MaxColumns;
+                MaxRows = device.MaxRows;
                 infos[i] = device;
             }
+
             DeviceCount = count;
+            IsInitialized = true;
 
             return true;
         }
@@ -81,7 +88,52 @@ public class WootingKeyboardService : IKeyboardService
     {
         if (!IsInitialized) return;
 
-        // TODO: Convert byte array to KeyColour array and call RGBControl.SetFull(keys);
+        KeyColour[,] keys = new KeyColour[RGBControl.MaxRGBRows, RGBControl.MaxRGBCols];
+        
+        // Initialize all keys to black (off)
+        for (byte row = 0; row < RGBControl.MaxRGBRows; row++)
+        {
+            for (byte col = 0; col < RGBControl.MaxRGBCols; col++)
+            {
+                keys[row, col] = new KeyColour(0, 0, 0);
+            }
+        }
+
+        // Fill in colors from the provided array
+        // Expected format: colors[row, col] where each element contains RGB packed or
+        // colors has dimensions [rows, cols*3] where triplets are R,G,B
+        int rows = Math.Min(colors.GetLength(0), RGBControl.MaxRGBRows);
+        int cols = colors.GetLength(1);
+
+        if (cols == RGBControl.MaxRGBCols * 3)
+        {
+            // Format: [row, col*3] where each row contains R,G,B,R,G,B,...
+            for (byte row = 0; row < rows; row++)
+            {
+                for (byte col = 0; col < Math.Min(cols / 3, RGBControl.MaxRGBCols); col++)
+                {
+                    byte r = colors[row, col * 3];
+                    byte g = colors[row, col * 3 + 1];
+                    byte b = colors[row, col * 3 + 2];
+                    keys[row, col] = new KeyColour(r, g, b);
+                }
+            }
+        }
+        else
+        {
+            // Assume simple format where caller manages the structure
+            for (byte row = 0; row < rows; row++)
+            {
+                for (byte col = 0; col < Math.Min(cols, RGBControl.MaxRGBCols); col++)
+                {
+                    // If it's a single byte per position, treat as intensity
+                    byte value = colors[row, col];
+                    keys[row, col] = new KeyColour(value, value, value);
+                }
+            }
+        }
+
+        RGBControl.SetFull(keys);
         Debug.WriteLine("Set full keyboard colors");
     }
 
@@ -90,6 +142,7 @@ public class WootingKeyboardService : IKeyboardService
         if (!IsInitialized) return;
         
         RGBControl.UpdateKeyboard();
+        //Debug.WriteLine("Keyboard is updated");
     }
 
     public void ResetKeyboard()

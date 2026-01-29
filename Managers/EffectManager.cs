@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using WootingRGB.Core;
 using WootingRGB.Effects;
 using WootingRGB.Services;

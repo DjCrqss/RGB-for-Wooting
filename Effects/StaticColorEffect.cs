@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows.Media;
 using WootingRGB.Core;
 using WootingRGB.Services;
@@ -7,8 +8,8 @@ namespace WootingRGB.Effects;
 public class StaticColorEffect : BaseRGBEffect
 {
     private readonly IKeyboardService _keyboardService;
-    private const int MaxRows = 6;
-    private const int MaxCols = 21;
+    private int MaxRows;
+    private int MaxCols;
 
     public override string Name => "Static Color";
     public override string Description => "Solid color across all keys";
@@ -16,6 +17,8 @@ public class StaticColorEffect : BaseRGBEffect
     public StaticColorEffect(IKeyboardService keyboardService)
     {
         _keyboardService = keyboardService;
+        MaxRows = keyboardService.MaxRows;
+        MaxCols = keyboardService.MaxColumns;
     }
 
     protected override void InitializeParameters()
