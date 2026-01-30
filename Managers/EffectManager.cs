@@ -37,6 +37,7 @@ public class EffectManager
         _availableEffects.Add(new ReactiveEffect(_keyboardService));
         _availableEffects.Add(new BreathingEffect(_keyboardService));
         _availableEffects.Add(new PerlinNoiseEffect(_keyboardService));
+        _availableEffects.Add(new RippleEffect(_keyboardService));
     }
 
     public void SetEffect(IRGBEffect effect)

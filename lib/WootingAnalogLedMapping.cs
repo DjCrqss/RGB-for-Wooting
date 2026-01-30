@@ -149,6 +149,136 @@ namespace WootingRGB.lib
         };
 
         internal static Dictionary<short, LedId> HidCodesReversed { get; } = HidCodes.ToDictionary(x => (short)x.Value, x => x.Key);
+
+        // Map HID codes to keyboard row/column positions
+        internal static Dictionary<short, (int row, int col)> HidToPosition { get; } = InitializeHidToPositionMap();
+
+        private static Dictionary<short, (int row, int col)> InitializeHidToPositionMap()
+        {
+            var map = new Dictionary<short, (int row, int col)>();
+            
+            foreach (var kvp in HidCodesReversed)
+            {
+                var hidCode = kvp.Key;
+                var ledId = kvp.Value;
+                var position = GetLedIdPosition(ledId);
+                if (position.HasValue)
+                {
+                    map[hidCode] = position.Value;
+                }
+            }
+            
+            return map;
+        }
+
+        private static (int row, int col)? GetLedIdPosition(LedId ledId)
+        {
+            // Map LedId to keyboard row/col positions (0-indexed)
+            // Based on standard keyboard layout
+            return ledId switch
+            {
+                // Row 0 - F keys and extras
+                LedId.Keyboard_Escape => (0, 0),
+                LedId.Keyboard_F1 => (0, 2),
+                LedId.Keyboard_F2 => (0, 3),
+                LedId.Keyboard_F3 => (0, 4),
+                LedId.Keyboard_F4 => (0, 5),
+                LedId.Keyboard_F5 => (0, 6),
+                LedId.Keyboard_F6 => (0, 7),
+                LedId.Keyboard_F7 => (0, 8),
+                LedId.Keyboard_F8 => (0, 9),
+                LedId.Keyboard_F9 => (0, 10),
+                LedId.Keyboard_F10 => (0, 11),
+                LedId.Keyboard_F11 => (0, 12),
+                LedId.Keyboard_F12 => (0, 13),
+                LedId.Keyboard_PrintScreen => (0, 14),
+                LedId.Keyboard_ScrollLock => (0, 15),
+                LedId.Keyboard_PauseBreak => (0, 16),
+
+                // Row 1 - Number row
+                LedId.Keyboard_GraveAccentAndTilde => (1, 0),
+                LedId.Keyboard_1 => (1, 1),
+                LedId.Keyboard_2 => (1, 2),
+                LedId.Keyboard_3 => (1, 3),
+                LedId.Keyboard_4 => (1, 4),
+                LedId.Keyboard_5 => (1, 5),
+                LedId.Keyboard_6 => (1, 6),
+                LedId.Keyboard_7 => (1, 7),
+                LedId.Keyboard_8 => (1, 8),
+                LedId.Keyboard_9 => (1, 9),
+                LedId.Keyboard_0 => (1, 10),
+                LedId.Keyboard_MinusAndUnderscore => (1, 11),
+                LedId.Keyboard_EqualsAndPlus => (1, 12),
+                LedId.Keyboard_Backspace => (1, 13),
+                LedId.Keyboard_Insert => (1, 14),
+                LedId.Keyboard_Home => (1, 15),
+                LedId.Keyboard_PageUp => (1, 16),
+
+                // Row 2 - QWERTY row
+                LedId.Keyboard_Tab => (2, 0),
+                LedId.Keyboard_Q => (2, 1),
+                LedId.Keyboard_W => (2, 2),
+                LedId.Keyboard_E => (2, 3),
+                LedId.Keyboard_R => (2, 4),
+                LedId.Keyboard_T => (2, 5),
+                LedId.Keyboard_Y => (2, 6),
+                LedId.Keyboard_U => (2, 7),
+                LedId.Keyboard_I => (2, 8),
+                LedId.Keyboard_O => (2, 9),
+                LedId.Keyboard_P => (2, 10),
+                LedId.Keyboard_BracketLeft => (2, 11),
+                LedId.Keyboard_BracketRight => (2, 12),
+                LedId.Keyboard_Backslash => (2, 13),
+                LedId.Keyboard_Delete => (2, 14),
+                LedId.Keyboard_End => (2, 15),
+                LedId.Keyboard_PageDown => (2, 16),
+
+                // Row 3 - ASDF row
+                LedId.Keyboard_CapsLock => (3, 0),
+                LedId.Keyboard_A => (3, 1),
+                LedId.Keyboard_S => (3, 2),
+                LedId.Keyboard_D => (3, 3),
+                LedId.Keyboard_F => (3, 4),
+                LedId.Keyboard_G => (3, 5),
+                LedId.Keyboard_H => (3, 6),
+                LedId.Keyboard_J => (3, 7),
+                LedId.Keyboard_K => (3, 8),
+                LedId.Keyboard_L => (3, 9),
+                LedId.Keyboard_SemicolonAndColon => (3, 10),
+                LedId.Keyboard_ApostropheAndDoubleQuote => (3, 11),
+                LedId.Keyboard_Enter => (3, 12),
+
+                // Row 4 - ZXCV row
+                LedId.Keyboard_LeftShift => (4, 0),
+                LedId.Keyboard_Z => (4, 1),
+                LedId.Keyboard_X => (4, 2),
+                LedId.Keyboard_C => (4, 3),
+                LedId.Keyboard_V => (4, 4),
+                LedId.Keyboard_B => (4, 5),
+                LedId.Keyboard_N => (4, 6),
+                LedId.Keyboard_M => (4, 7),
+                LedId.Keyboard_CommaAndLessThan => (4, 8),
+                LedId.Keyboard_PeriodAndBiggerThan => (4, 9),
+                LedId.Keyboard_SlashAndQuestionMark => (4, 10),
+                LedId.Keyboard_RightShift => (4, 11),
+                LedId.Keyboard_ArrowUp => (4, 14),
+
+                // Row 5 - Bottom row
+                LedId.Keyboard_LeftCtrl => (5, 0),
+                LedId.Keyboard_LeftGui => (5, 1),
+                LedId.Keyboard_LeftAlt => (5, 2),
+                LedId.Keyboard_Space => (5, 5),
+                LedId.Keyboard_RightAlt => (5, 9),
+                LedId.Keyboard_Function => (5, 10),
+                LedId.Keyboard_Application => (5, 11),
+                LedId.Keyboard_RightCtrl => (5, 12),
+                LedId.Keyboard_ArrowLeft => (5, 13),
+                LedId.Keyboard_ArrowDown => (5, 14),
+                LedId.Keyboard_ArrowRight => (5, 15),
+
+                _ => null
+            };
+        }
     }
 }
 
