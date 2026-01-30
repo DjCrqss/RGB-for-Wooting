@@ -66,12 +66,7 @@ public class WootingKeyboardService : IKeyboardService
     public void UpdateKeyboard()
     {
         if (!IsInitialized) return;
-        try { RGBControl.UpdateKeyboard();
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Error updating keyboard: {ex.Message}");
-        }
+        RGBControl.UpdateKeyboard();
     }
 
     public void ResetKeyboard()

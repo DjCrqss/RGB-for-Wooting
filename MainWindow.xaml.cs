@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -372,16 +373,135 @@ namespace WootingRGB
 
                         var comboBox = new ComboBox
                         {
-                            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30")),
-                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0")),
-                            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")),
-                            BorderThickness = new Thickness(1),
-                            Padding = new Thickness(10, 5, 10, 5),
-                            FontSize = 13,
-                            Height = 35,
                             ItemsSource = choiceParam.Choices,
-                            SelectedItem = choiceParam.StringValue
+                            SelectedItem = choiceParam.StringValue,
+                            FontSize = 13,
+                            Height = 35
                         };
+
+                        // Create custom template for dark theme ComboBox
+                        var comboBoxTemplate = new ControlTemplate(typeof(ComboBox));
+                        
+                        // Main grid
+                        var mainGrid = new FrameworkElementFactory(typeof(Grid));
+                        mainGrid.SetValue(Grid.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30")));
+                        
+                        // Define columns
+                        var column1 = new FrameworkElementFactory(typeof(ColumnDefinition));
+                        column1.SetValue(ColumnDefinition.WidthProperty, new GridLength(1, GridUnitType.Star));
+                        var column2 = new FrameworkElementFactory(typeof(ColumnDefinition));
+                        column2.SetValue(ColumnDefinition.WidthProperty, GridLength.Auto);
+                        mainGrid.AppendChild(column1);
+                        mainGrid.AppendChild(column2);
+                        
+                        // Border around everything
+                        var mainBorder = new FrameworkElementFactory(typeof(Border));
+                        mainBorder.SetValue(Border.BackgroundProperty, Brushes.Transparent);
+                        mainBorder.SetValue(Border.BorderBrushProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")));
+                        mainBorder.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+                        mainBorder.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+                        mainBorder.SetValue(Grid.ColumnProperty, 0);
+                        mainBorder.SetValue(Grid.ColumnSpanProperty, 2);
+                        
+                        // Toggle button (invisible, covers whole area)
+                        var toggleButton = new FrameworkElementFactory(typeof(ToggleButton));
+                        toggleButton.SetValue(ToggleButton.NameProperty, "toggleButton");
+                        toggleButton.SetValue(Grid.ColumnProperty, 0);
+                        toggleButton.SetValue(Grid.ColumnSpanProperty, 2);
+                        toggleButton.SetValue(ToggleButton.BackgroundProperty, Brushes.Transparent);
+                        toggleButton.SetValue(ToggleButton.BorderBrushProperty, Brushes.Transparent);
+                        toggleButton.SetBinding(ToggleButton.IsCheckedProperty, new Binding("IsDropDownOpen") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent), Mode = BindingMode.TwoWay });
+                        toggleButton.SetValue(ToggleButton.FocusableProperty, false);
+                        toggleButton.SetValue(ToggleButton.ClickModeProperty, ClickMode.Press);
+                        toggleButton.SetValue(ToggleButton.CursorProperty, Cursors.Hand);
+                        
+                        // Content presenter (selected item display)
+                        var contentPresenter = new FrameworkElementFactory(typeof(ContentPresenter));
+                        contentPresenter.SetValue(ContentPresenter.NameProperty, "ContentSite");
+                        contentPresenter.SetValue(Grid.ColumnProperty, 0);
+                        contentPresenter.SetValue(ContentPresenter.MarginProperty, new Thickness(10, 0, 0, 0));
+                        contentPresenter.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+                        contentPresenter.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Left);
+                        contentPresenter.SetValue(ContentPresenter.IsHitTestVisibleProperty, false);
+                        contentPresenter.SetBinding(ContentPresenter.ContentProperty, new Binding("SelectionBoxItem") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
+                        
+                        // Dropdown arrow container
+                        var arrowBorder = new FrameworkElementFactory(typeof(Border));
+                        arrowBorder.SetValue(Grid.ColumnProperty, 1);
+                        arrowBorder.SetValue(Border.WidthProperty, 30.0);
+                        arrowBorder.SetValue(Border.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3E3E42")));
+                        arrowBorder.SetValue(Border.IsHitTestVisibleProperty, false);
+                        
+                        var arrowPath = new FrameworkElementFactory(typeof(Path));
+                        arrowPath.SetValue(Path.DataProperty, Geometry.Parse("M 0 0 L 4 4 L 8 0 Z"));
+                        arrowPath.SetValue(Path.FillProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0")));
+                        arrowPath.SetValue(Path.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+                        arrowPath.SetValue(Path.VerticalAlignmentProperty, VerticalAlignment.Center);
+                        
+                        arrowBorder.AppendChild(arrowPath);
+                        
+                        // Popup
+                        var popup = new FrameworkElementFactory(typeof(Popup));
+                        popup.SetValue(Popup.NameProperty, "PART_Popup");
+                        popup.SetValue(Popup.PlacementProperty, PlacementMode.Bottom);
+                        popup.SetValue(Popup.AllowsTransparencyProperty, true);
+                        popup.SetBinding(Popup.IsOpenProperty, new Binding("IsDropDownOpen") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
+                        
+                        var popupBorder = new FrameworkElementFactory(typeof(Border));
+                        popupBorder.SetValue(Border.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30")));
+                        popupBorder.SetValue(Border.BorderBrushProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")));
+                        popupBorder.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+                        popupBorder.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+                        popupBorder.SetValue(Border.MarginProperty, new Thickness(0, 1, 0, 0));
+                        popupBorder.SetBinding(Border.MinWidthProperty, new Binding("ActualWidth") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
+                        popupBorder.SetBinding(Border.MaxHeightProperty, new Binding("MaxDropDownHeight") { RelativeSource = new RelativeSource(RelativeSourceMode.TemplatedParent) });
+                        
+                        var scrollViewer = new FrameworkElementFactory(typeof(ScrollViewer));
+                        scrollViewer.SetValue(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
+                        
+                        var itemsPresenter = new FrameworkElementFactory(typeof(ItemsPresenter));
+                        itemsPresenter.SetValue(ItemsPresenter.NameProperty, "ItemsPresenter");
+                        itemsPresenter.SetValue(KeyboardNavigation.DirectionalNavigationProperty, KeyboardNavigationMode.Contained);
+                        
+                        scrollViewer.AppendChild(itemsPresenter);
+                        popupBorder.AppendChild(scrollViewer);
+                        popup.AppendChild(popupBorder);
+                        
+                        mainGrid.AppendChild(mainBorder);
+                        mainGrid.AppendChild(toggleButton);
+                        mainGrid.AppendChild(contentPresenter);
+                        mainGrid.AppendChild(arrowBorder);
+                        mainGrid.AppendChild(popup);
+                        
+                        comboBoxTemplate.VisualTree = mainGrid;
+                        
+                        // Add trigger for hover effect on Grid background
+                        var mouseOverTrigger = new Trigger { Property = ComboBox.IsMouseOverProperty, Value = true };
+                        mouseOverTrigger.Setters.Add(new Setter(Grid.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3E3E42"))));
+                        comboBoxTemplate.Triggers.Add(mouseOverTrigger);
+                        
+                        comboBox.Template = comboBoxTemplate;
+                        
+                        // Apply text color
+                        comboBox.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+                        
+                        // Style for ComboBox items
+                        var itemStyle = new Style(typeof(ComboBoxItem));
+                        itemStyle.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"))));
+                        itemStyle.Setters.Add(new Setter(ComboBoxItem.ForegroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"))));
+                        itemStyle.Setters.Add(new Setter(ComboBoxItem.PaddingProperty, new Thickness(10, 8, 10, 8)));
+                        itemStyle.Setters.Add(new Setter(ComboBoxItem.BorderThicknessProperty, new Thickness(0)));
+                        
+                        var itemHoverTrigger = new Trigger { Property = ComboBoxItem.IsMouseOverProperty, Value = true };
+                        itemHoverTrigger.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3E3E42"))));
+                        itemStyle.Triggers.Add(itemHoverTrigger);
+                        
+                        var selectedTrigger = new Trigger { Property = ComboBoxItem.IsSelectedProperty, Value = true };
+                        selectedTrigger.Setters.Add(new Setter(ComboBoxItem.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFD45C"))));
+                        selectedTrigger.Setters.Add(new Setter(ComboBoxItem.ForegroundProperty, new SolidColorBrush(Colors.Black)));
+                        itemStyle.Triggers.Add(selectedTrigger);
+                        
+                        comboBox.ItemContainerStyle = itemStyle;
 
                         comboBox.SelectionChanged += (s, e) =>
                         {
@@ -393,117 +513,6 @@ namespace WootingRGB
 
                         choicePanel.Children.Add(comboBox);
                         return choicePanel;
-                    }
-                    else if (parameter is RangeParameter directionRangeParam)
-                    {
-                        var sliderPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
-                        
-                        // Top row: Label
-                        var label = new TextBlock
-                        {
-                            Text = parameter.DisplayName,
-                            FontSize = 13,
-                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
-                            Margin = new Thickness(0, 0, 0, 10)
-                        };
-                        sliderPanel.Children.Add(label);
-
-                        // Bottom row: Slider, TextBox, and % symbol
-                        var controlRow = new Grid();
-                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-                        var slider = new Slider
-                        {
-                            Minimum = (double)directionRangeParam.MinValue,
-                            Maximum = (double)directionRangeParam.MaxValue,
-                            Value = directionRangeParam.NumericValue,
-                            TickFrequency = 1,
-                            IsSnapToTickEnabled = true,
-                            Style = (Style)FindResource("EffectSlider"),
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Margin = new Thickness(0, 0, 15, 0)
-                        };
-                        Grid.SetColumn(slider, 0);
-
-                        // Create a border for rounded corners
-                        var textBoxBorder = new Border
-                        {
-                            Width = 50,
-                            Height = 30,
-                            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E1E1E")),
-                            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")),
-                            BorderThickness = new Thickness(1),
-                            CornerRadius = new CornerRadius(4),
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Margin = new Thickness(0, 0, 5, 0)
-                        };
-
-                        var valueTextBox = new TextBox
-                        {
-                            Text = $"{directionRangeParam.NumericValue:F0}",
-                            Background = Brushes.Transparent,
-                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0")),
-                            BorderThickness = new Thickness(0),
-                            Padding = new Thickness(8, 5, 8, 5),
-                            FontSize = 13,
-                            VerticalAlignment = VerticalAlignment.Center,
-                            TextAlignment = TextAlignment.Center
-                        };
-
-                        textBoxBorder.Child = valueTextBox;
-                        Grid.SetColumn(textBoxBorder, 1);
-
-                        var percentSymbol = new TextBlock
-                        {
-                            Text = "%",
-                            FontSize = 13,
-                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
-                            VerticalAlignment = VerticalAlignment.Center
-                        };
-                        Grid.SetColumn(percentSymbol, 2);
-
-                        // Slider updates TextBox
-                        slider.ValueChanged += (s, e) =>
-                        {
-                            directionRangeParam.Value = e.NewValue;
-                            valueTextBox.Text = $"{e.NewValue:F0}";
-                        };
-
-                        // TextBox updates slider and parameter
-                        valueTextBox.TextChanged += (s, e) =>
-                        {
-                            if (double.TryParse(valueTextBox.Text, out double value))
-                            {
-                                value = Math.Clamp(value, (double)directionRangeParam.MinValue, (double)directionRangeParam.MaxValue);
-                                if (Math.Abs(slider.Value - value) > 0.01)
-                                {
-                                    slider.Value = value;
-                                }
-                            }
-                        };
-
-                        // Handle focus loss to validate and correct input
-                        valueTextBox.LostFocus += (s, e) =>
-                        {
-                            if (!double.TryParse(valueTextBox.Text, out double value))
-                            {
-                                valueTextBox.Text = $"{slider.Value:F0}";
-                            }
-                            else
-                            {
-                                value = Math.Clamp(value, (double)directionRangeParam.MinValue, (double)directionRangeParam.MaxValue);
-                                valueTextBox.Text = $"{value:F0}";
-                                slider.Value = value;
-                            }
-                        };
-
-                        controlRow.Children.Add(slider);
-                        controlRow.Children.Add(textBoxBorder);
-                        controlRow.Children.Add(percentSymbol);
-                        sliderPanel.Children.Add(controlRow);
-                        return sliderPanel;
                     }
                     break;
             }

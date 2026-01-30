@@ -12,6 +12,7 @@ public class EffectManager
     private IRGBEffect? _currentEffect;
     private System.Threading.Timer? _updateTimer;
     private readonly List<IRGBEffect> _availableEffects;
+    private readonly object _updateLock = new object();
 
     public IRGBEffect? CurrentEffect => _currentEffect;
     public IReadOnlyList<IRGBEffect> AvailableEffects => _availableEffects.AsReadOnly();
@@ -100,11 +101,21 @@ public class EffectManager
 
     private void UpdateEffect()
     {
-        if (_currentEffect == null || !IsEnabled || !_keyboardService.IsInitialized)
-            return;
+        if (!Monitor.TryEnter(_updateLock))
+            return; // Skip this update if previous one still running
+        
+        try
+        {
+            if (_currentEffect == null || !IsEnabled || !_keyboardService.IsInitialized)
+                return;
 
-        var keyboardState = _analogInputService.ReadKeyboardState();
-        _currentEffect.Update(keyboardState);
+            var keyboardState = _analogInputService.ReadKeyboardState();
+            _currentEffect.Update(keyboardState);
+        }
+        finally
+        {
+            Monitor.Exit(_updateLock);
+        }
     }
 
     public void Shutdown()
