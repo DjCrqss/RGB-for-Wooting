@@ -270,7 +270,6 @@ public class PerlinNoiseEffect : BaseRGBEffect
             if (_hidToPosition.TryGetValue(keyCode, out var position))
             {
                 var (row, col) = position;
-                
                 if (row >= 0 && row < _keyboardService.MaxRows && 
                     col >= 0 && col < _keyboardService.MaxColumns)
                 {
@@ -281,7 +280,7 @@ public class PerlinNoiseEffect : BaseRGBEffect
 
         // Render the effect
         var scaleValue = scale / 100.0;
-        var radiusValue = pressRadius / 100.0 * 5; // Scale to reasonable radius
+        var radiusValue = pressRadius / 100.0 * 5;
 
         for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
@@ -292,29 +291,23 @@ public class PerlinNoiseEffect : BaseRGBEffect
                 var noiseZ = _time;
                 var noiseValue = _perlinNoise.Noise(noiseX, noiseY, noiseZ);
                 
-                // Normalize to 0-0.66 range (Perlin noise is typically -1 to 1)
-                noiseValue = (noiseValue + 1) * 0.5; // Normalize to 0-1
-                
-                // Apply contrast curve to make colors pop more
+                noiseValue = (noiseValue + 1) * 0.5; // normalize to 0-1
                 noiseValue = Math.Pow(noiseValue, 0.7); // Slight power curve for better contrast
-                
-                noiseValue *= 0.66; // Scale to 0-0.66 range
+                noiseValue *= 0.66; // Scale to 0-0.66 range (other third is for pressed keys)
 
-                // Calculate influence from pressed keys
                 double pressHeight = 0;
-
                 foreach (var pressedKeyPos in _keyPressDepths)
                 {
                     var (pressRow, pressCol) = pressedKeyPos.Key;
                     var pressure = pressedKeyPos.Value;
 
-                    // Calculate distance from current position to pressed key
+                    // calc dstance from current position to pressed key
                     var distance = Math.Sqrt(
                         Math.Pow(row - pressRow, 2) + 
                         Math.Pow(col - pressCol, 2)
                     );
 
-                    // Apply radius-based falloff
+                    // radius-based falloff
                     if (distance < radiusValue)
                     {
                         var falloff = 1.0 - (distance / radiusValue);
@@ -325,7 +318,7 @@ public class PerlinNoiseEffect : BaseRGBEffect
                     }
                 }
 
-                // Calculate final height: base noise (0-0.66) + press height (0-0.34)
+                // calculate final height: base noise (0-0.66) + press height (0-0.34)
                 // This ensures pressed keys can push height up to 1.0
                 var totalHeight = noiseValue + (pressHeight * 0.34);
                 totalHeight = Math.Clamp(totalHeight, 0, 1);
@@ -376,81 +369,94 @@ public class PerlinNoiseEffect : BaseRGBEffect
     private class PerlinNoise
     {
         private const int PermutationSize = 256;
-        private readonly int[] _permutation;
+        private readonly byte[] _permutation;
 
         public PerlinNoise(int seed = 0)
         {
-            _permutation = new int[PermutationSize * 2];
+            _permutation = new byte[PermutationSize];
             var random = new Random(seed);
             
-            var p = new int[PermutationSize];
             for (int i = 0; i < PermutationSize; i++)
-                p[i] = i;
+                _permutation[i] = (byte)i;
 
-            for (int i = 0; i < PermutationSize; i++)
+            for (int i = PermutationSize - 1; i > 0; i--)
             {
-                int j = random.Next(PermutationSize);
-                (p[i], p[j]) = (p[j], p[i]);
+                int j = random.Next(i + 1);
+                (_permutation[i], _permutation[j]) = (_permutation[j], _permutation[i]);
             }
-
-            for (int i = 0; i < PermutationSize * 2; i++)
-                _permutation[i] = p[i % PermutationSize];
         }
 
         public double Noise(double x, double y, double z)
         {
-            int X = (int)Math.Floor(x) & 255;
-            int Y = (int)Math.Floor(y) & 255;
-            int Z = (int)Math.Floor(z) & 255;
+            int X = ((int)x) & 255;
+            int Y = ((int)y) & 255;
+            int Z = ((int)z) & 255;
 
-            x -= Math.Floor(x);
-            y -= Math.Floor(y);
-            z -= Math.Floor(z);
+            x -= (int)x;
+            y -= (int)y;
+            z -= (int)z;
 
-            double u = Fade(x);
-            double v = Fade(y);
-            double w = Fade(z);
+            // fade curves
+            double u = x * x * x * (x * (x * 6 - 15) + 10);
+            double v = y * y * y * (y * (y * 6 - 15) + 10);
+            double w = z * z * z * (z * (z * 6 - 15) + 10);
 
             int A = _permutation[X] + Y;
-            int AA = _permutation[A] + Z;
-            int AB = _permutation[A + 1] + Z;
-            int B = _permutation[X + 1] + Y;
-            int BA = _permutation[B] + Z;
-            int BB = _permutation[B + 1] + Z;
+            int AA = _permutation[A & 255] + Z;
+            int AB = _permutation[(A + 1) & 255] + Z;
+            int B = _permutation[(X + 1) & 255] + Y;
+            int BA = _permutation[B & 255] + Z;
+            int BB = _permutation[(B + 1) & 255] + Z;
 
-            return Lerp(w,
-                Lerp(v,
-                    Lerp(u,
-                        Grad(_permutation[AA], x, y, z),
-                        Grad(_permutation[BA], x - 1, y, z)),
-                    Lerp(u,
-                        Grad(_permutation[AB], x, y - 1, z),
-                        Grad(_permutation[BB], x - 1, y - 1, z))),
-                Lerp(v,
-                    Lerp(u,
-                        Grad(_permutation[AA + 1], x, y, z - 1),
-                        Grad(_permutation[BA + 1], x - 1, y, z - 1)),
-                    Lerp(u,
-                        Grad(_permutation[AB + 1], x, y - 1, z - 1),
-                        Grad(_permutation[BB + 1], x - 1, y - 1, z - 1))));
+            // trilinear interpolation
+            double x1 = x - 1, y1 = y - 1, z1 = z - 1;
+            
+            double c000 = Grad(_permutation[AA & 255], x, y, z);
+            double c100 = Grad(_permutation[BA & 255], x1, y, z);
+            double c010 = Grad(_permutation[AB & 255], x, y1, z);
+            double c110 = Grad(_permutation[BB & 255], x1, y1, z);
+            double c001 = Grad(_permutation[(AA + 1) & 255], x, y, z1);
+            double c101 = Grad(_permutation[(BA + 1) & 255], x1, y, z1);
+            double c011 = Grad(_permutation[(AB + 1) & 255], x, y1, z1);
+            double c111 = Grad(_permutation[(BB + 1) & 255], x1, y1, z1);
+
+            // x
+            double nx00 = c000 + u * (c100 - c000);
+            double nx01 = c001 + u * (c101 - c001);
+            double nx10 = c010 + u * (c110 - c010);
+            double nx11 = c011 + u * (c111 - c011);
+
+            // y
+            double nxy0 = nx00 + v * (nx10 - nx00);
+            double nxy1 = nx01 + v * (nx11 - nx01);
+
+            // z
+            return nxy0 + w * (nxy1 - nxy0);
         }
 
-        private double Fade(double t)
+        // gradient function 
+        private static double Grad(int hash, double x, double y, double z)
         {
-            return t * t * t * (t * (t * 6 - 15) + 10);
-        }
-
-        private double Lerp(double t, double a, double b)
-        {
-            return a + t * (b - a);
-        }
-
-        private double Grad(int hash, double x, double y, double z)
-        {
-            int h = hash & 15;
-            double u = h < 8 ? x : y;
-            double v = h < 4 ? y : (h == 12 || h == 14 ? x : z);
-            return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
+            switch (hash & 15)
+            {
+                case 0: return x + y;
+                case 1: return -x + y;
+                case 2: return x - y;
+                case 3: return -x - y;
+                case 4: return x + z;
+                case 5: return -x + z;
+                case 6: return x - z;
+                case 7: return -x - z;
+                case 8: return y + z;
+                case 9: return -y + z;
+                case 10: return y - z;
+                case 11: return -y - z;
+                case 12: return y + x;
+                case 13: return -y + z;
+                case 14: return y - x;
+                case 15: return -y - z;
+                default: return 0;
+            }
         }
     }
 }
