@@ -58,7 +58,7 @@ public class JoystickEffect : BaseRGBEffect
             "range",
             "Range",
             EffectParameterType.Intensity,
-            defaultValue: 15,
+            defaultValue: 20,
             minValue: 10,
             maxValue: 100
         ));
@@ -79,6 +79,12 @@ public class JoystickEffect : BaseRGBEffect
             defaultValue: 20,
             minValue: 10,
             maxValue: 200
+        ));
+
+        _parameters.Add(new BooleanParameter(
+            "scaleToKeyboard",
+            "Scale to Keyboard",
+            defaultValue: true
         ));
     }
 
@@ -101,10 +107,12 @@ public class JoystickEffect : BaseRGBEffect
         var range = GetParameter<RangeParameter>("range")?.NumericValue ?? 50;
         var smoothing = GetParameter<RangeParameter>("smoothing")?.NumericValue ?? 70;
         var radius = GetParameter<RangeParameter>("radius")?.NumericValue ?? 50;
+        var scaleToKeyboard = GetParameter<BooleanParameter>("scaleToKeyboard")?.BooleanValue ?? true;
 
         double rangeMultiplier = range / 50.0;
         double smoothingFactor = smoothing / 100.0;
         double radiusMultiplier = radius / 50.0;
+        bool useKeyboardScaling = scaleToKeyboard;
 
         // Calculate keyboard center in row/col space
         double keyboardCenterRow = _keyboardService.MaxRows / 2.0;
@@ -139,10 +147,25 @@ public class JoystickEffect : BaseRGBEffect
             }
         }
 
-        // Scale input by range
-        double maxOffset = Math.Max(_keyboardService.MaxRows, _keyboardService.MaxColumns) * rangeMultiplier;
-        _targetX = inputX * maxOffset;
-        _targetY = inputY * maxOffset;
+        // Scale input by range and optionally by keyboard dimensions
+        double maxOffsetX, maxOffsetY;
+        
+        if (useKeyboardScaling)
+        {
+            // Scale independently based on keyboard dimensions
+            maxOffsetX = _keyboardService.MaxColumns * rangeMultiplier;
+            maxOffsetY = _keyboardService.MaxRows * rangeMultiplier;
+        }
+        else
+        {
+            // Use same scaling for both directions (original behavior)
+            double maxOffset = Math.Max(_keyboardService.MaxRows, _keyboardService.MaxColumns) * rangeMultiplier;
+            maxOffsetX = maxOffset;
+            maxOffsetY = maxOffset;
+        }
+        
+        _targetX = inputX * maxOffsetX;
+        _targetY = inputY * maxOffsetY;
 
         // Smooth interpolation to target position
         _currentX = EffectUtilities.Lerp(_targetX, _currentX, smoothingFactor);

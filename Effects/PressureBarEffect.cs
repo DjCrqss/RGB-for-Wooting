@@ -42,13 +42,10 @@ public class PressureBarEffect : BaseRGBEffect
             "Both"
         ));
 
-        _parameters.Add(new RangeParameter(
+        _parameters.Add(new BooleanParameter(
             "inverted",
             "Inverted",
-            EffectParameterType.Intensity,
-            defaultValue: 0,
-            minValue: 0,
-            maxValue: 1
+            defaultValue: false
         ));
 
         _parameters.Add(new RangeParameter(
@@ -83,11 +80,11 @@ public class PressureBarEffect : BaseRGBEffect
         var barColor = GetParameter<ColorParameter>("barColor")?.ColorValue ?? MediaColor.FromRgb(0, 255, 255);
         var backgroundColor = GetParameter<ColorParameter>("backgroundColor")?.ColorValue ?? MediaColor.FromRgb(0, 0, 0);
         var direction = GetParameter<ChoiceParameter>("direction")?.StringValue ?? "Vertical";
-        var inverted = GetParameter<RangeParameter>("inverted")?.NumericValue ?? 0;
+        var inverted = GetParameter<BooleanParameter>("inverted")?.BooleanValue ?? false;
         var fadeSpeed = GetParameter<RangeParameter>("fadeSpeed")?.NumericValue ?? 30;
         var sensitivity = GetParameter<RangeParameter>("sensitivity")?.NumericValue ?? 100;
 
-        bool isInverted = inverted > 0.5;
+        bool isInverted = inverted;
         double fadeRate = (fadeSpeed / 100.0) * 0.05;
         double sensitivityMultiplier = sensitivity / 100.0;
 
@@ -167,14 +164,14 @@ public class PressureBarEffect : BaseRGBEffect
                     switch (direction)
                     {
                         case "Vertical":
-                            intensity = CalculateVerticalBarIntensity(row, col, pressRow, pressCol, pressure, isInverted);
+                            intensity = CalculateVerticalBarIntensity(row, col, pressRow, pressCol, pressure, inverted);
                             break;
                         case "Horizontal":
-                            intensity = CalculateHorizontalBarIntensity(row, col, pressRow, pressCol, pressure, isInverted);
+                            intensity = CalculateHorizontalBarIntensity(row, col, pressRow, pressCol, pressure, inverted);
                             break;
                         case "Both":
-                            var verticalIntensity = CalculateVerticalBarIntensity(row, col, pressRow, pressCol, pressure, isInverted);
-                            var horizontalIntensity = CalculateHorizontalBarIntensity(row, col, pressRow, pressCol, pressure, isInverted);
+                            var verticalIntensity = CalculateVerticalBarIntensity(row, col, pressRow, pressCol, pressure, inverted);
+                            var horizontalIntensity = CalculateHorizontalBarIntensity(row, col, pressRow, pressCol, pressure, inverted);
                             intensity = Math.Max(verticalIntensity, horizontalIntensity);
                             break;
                     }

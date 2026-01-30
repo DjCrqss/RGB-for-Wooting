@@ -6,7 +6,8 @@ public enum EffectParameterType
     Speed,
     Intensity,
     Size,
-    Direction
+    Direction,
+    Boolean
 }
 
 public interface IEffectParameter

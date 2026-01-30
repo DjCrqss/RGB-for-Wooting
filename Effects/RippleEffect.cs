@@ -77,22 +77,16 @@ public class RippleEffect : BaseRGBEffect
             maxValue: 100
         ));
 
-        _parameters.Add(new RangeParameter(
+        _parameters.Add(new BooleanParameter(
             "randomColors",
             "Random Colors",
-            EffectParameterType.Intensity,
-            defaultValue: 0,
-            minValue: 0,
-            maxValue: 1
+            defaultValue: false
         ));
 
-        _parameters.Add(new RangeParameter(
+        _parameters.Add(new BooleanParameter(
             "inverted",
             "Inverted",
-            EffectParameterType.Intensity,
-            defaultValue: 0,
-            minValue: 0,
-            maxValue: 1
+            defaultValue: false
         ));
     }
 
@@ -116,11 +110,11 @@ public class RippleEffect : BaseRGBEffect
         var spreadSpeed = GetParameter<RangeParameter>("spreadSpeed")?.NumericValue ?? 13;
         var fadeSpeed = GetParameter<RangeParameter>("fadeSpeed")?.NumericValue ?? 45;
         var velocityInfluence = GetParameter<RangeParameter>("velocityInfluence")?.NumericValue ?? 50;
-        var randomColors = GetParameter<RangeParameter>("randomColors")?.NumericValue ?? 0;
-        var inverted = GetParameter<RangeParameter>("inverted")?.NumericValue ?? 0;
+        var randomColors = GetParameter<BooleanParameter>("randomColors")?.BooleanValue ?? false;
+        var inverted = GetParameter<BooleanParameter>("inverted")?.BooleanValue ?? false;
 
-        bool useRandomColors = randomColors > 0.5;
-        bool isInverted = inverted > 0.5;
+        bool useRandomColors = randomColors;
+        bool isInverted = inverted;
 
         // Track currently pressed keys and detect releases
         foreach (var pressedKey in keyboardState.PressedKeys)

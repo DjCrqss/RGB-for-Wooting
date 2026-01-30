@@ -43,18 +43,80 @@ namespace WootingRGB
 
         private void InitializeEffectButtons()
         {
+            // Define effect categories
+            var categories = new Dictionary<string, List<IRGBEffect>>
+            {
+                ["Basic"] = new List<IRGBEffect>(),
+                ["Advanced"] = new List<IRGBEffect>(),
+                ["Hall Effect"] = new List<IRGBEffect>()
+            };
+
+            // Categorize effects
             foreach (var effect in _effectManager.AvailableEffects)
             {
-                var button = new Button
+                switch (effect.Name)
                 {
-                    Content = effect.Name,
-                    Tag = effect,
-                    Style = (Style)FindResource("EffectButton"),
-                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"))
+                    case "Static Color":
+                    case "Rainbow":
+                    case "Rain":
+                    case "Sparkles":
+                    case "Breathing":
+                        categories["Basic"].Add(effect);
+                        break;
+                    case "Fire":
+                        categories["Advanced"].Add(effect);
+                        break;
+                    case "Perlin Noise":
+                    case "Ripple":
+                    case "Pressure Bars":
+                    case "Joystick":
+                        categories["Hall Effect"].Add(effect);
+                        break;
+                    default:
+                        // If an effect doesn't match, put it in Advanced
+                        categories["Advanced"].Add(effect);
+                        break;
+                }
+            }
+
+            // Create collapsible sections for each category
+            foreach (var category in categories)
+            {
+                if (category.Value.Count == 0) continue;
+
+                // Create expander for category
+                var expander = new Expander
+                {
+                    Header = category.Key,
+                    IsExpanded = true,
+                    Margin = new Thickness(0, 0, 0, 10),
+                    Style = (Style)FindResource("CategoryExpander")
                 };
 
-                button.Click += EffectButton_Click;
-                EffectButtonsPanel.Children.Add(button);
+                // Create grid for effect buttons in this category
+                var effectsGrid = new UniformGrid
+                {
+                    Columns = 2,
+                    Margin = new Thickness(0, 10, 0, 0)
+                };
+
+                // Add effect buttons to the grid
+                foreach (var effect in category.Value)
+                {
+                    var button = new Button
+                    {
+                        Content = effect.Name,
+                        Tag = effect,
+                        Style = (Style)FindResource("EffectButton"),
+                        Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"))
+                    };
+
+                    button.Click += EffectButton_Click;
+                    effectsGrid.Children.Add(button);
+                }
+
+                expander.Content = effectsGrid;
+                EffectCategoriesPanel.Children.Add(expander);
             }
         }
 
@@ -95,13 +157,19 @@ namespace WootingRGB
                 EnableEffectButtons(false);
                 ClearParametersPanel();
                 
-                // Clear selected effect button highlight
-                foreach (var child in EffectButtonsPanel.Children)
+                // Clear selected effect button highlight in all categories
+                foreach (var child in EffectCategoriesPanel.Children)
                 {
-                    if (child is Button btn)
+                    if (child is Expander expander && expander.Content is UniformGrid grid)
                     {
-                        btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"));
-                        btn.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+                        foreach (var gridChild in grid.Children)
+                        {
+                            if (gridChild is Button btn)
+                            {
+                                btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"));
+                                btn.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+                            }
+                        }
                     }
                 }
             }
@@ -109,11 +177,17 @@ namespace WootingRGB
 
         private void EnableEffectButtons(bool enabled)
         {
-            foreach (var child in EffectButtonsPanel.Children)
+            foreach (var child in EffectCategoriesPanel.Children)
             {
-                if (child is Button button)
+                if (child is Expander expander && expander.Content is UniformGrid grid)
                 {
-                    button.IsEnabled = enabled;
+                    foreach (var gridChild in grid.Children)
+                    {
+                        if (gridChild is Button button)
+                        {
+                            button.IsEnabled = enabled;
+                        }
+                    }
                 }
             }
         }
@@ -130,19 +204,25 @@ namespace WootingRGB
                 _effectManager.SetEffect(effect);
 
                 // Highlight selected button with yellow accent color and black text
-                foreach (var child in EffectButtonsPanel.Children)
+                foreach (var child in EffectCategoriesPanel.Children)
                 {
-                    if (child is Button btn)
+                    if (child is Expander expander && expander.Content is UniformGrid grid)
                     {
-                        if (btn == button)
+                        foreach (var gridChild in grid.Children)
                         {
-                            btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFD45C"));
-                            btn.Foreground = new SolidColorBrush(Colors.Black);
-                        }
-                        else
-                        {
-                            btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"));
-                            btn.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+                            if (gridChild is Button btn)
+                            {
+                                if (btn == button)
+                                {
+                                    btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFD45C"));
+                                    btn.Foreground = new SolidColorBrush(Colors.Black);
+                                }
+                                else
+                                {
+                                    btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"));
+                                    btn.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+                                }
+                            }
                         }
                     }
                 }
@@ -175,6 +255,43 @@ namespace WootingRGB
         {
             switch (parameter.ParameterType)
             {
+                case EffectParameterType.Boolean:
+                    if (parameter is BooleanParameter boolParam)
+                    {
+                        var togglePanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
+                        var toggleRow = new Grid();
+                        toggleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                        toggleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                        
+                        var label = new TextBlock
+                        {
+                            Text = parameter.DisplayName,
+                            FontSize = 13,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(0, 0, 15, 0)
+                        };
+                        Grid.SetColumn(label, 0);
+                        
+                        var toggleSwitch = new ToggleSwitch
+                        {
+                            IsChecked = boolParam.BooleanValue,
+                            HorizontalAlignment = HorizontalAlignment.Left
+                        };
+
+                        toggleSwitch.Toggled += (s, isChecked) =>
+                        {
+                            boolParam.Value = isChecked;
+                        };
+
+                        Grid.SetColumn(toggleSwitch, 1);
+                        toggleRow.Children.Add(label);
+                        toggleRow.Children.Add(toggleSwitch);
+                        togglePanel.Children.Add(toggleRow);
+                        return togglePanel;
+                    }
+                    break;
+
                 case EffectParameterType.Color:
                     if (parameter is ColorParameter colorParam)
                     {
@@ -532,6 +649,15 @@ namespace WootingRGB
             _effectManager.Shutdown();
             _analogInputService.Shutdown();
             _keyboardService.Shutdown();
+        }
+
+        private void Expander_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is Border border && border.TemplatedParent is Expander expander)
+            {
+                expander.IsExpanded = !expander.IsExpanded;
+                e.Handled = true;
+            }
         }
     }
 }

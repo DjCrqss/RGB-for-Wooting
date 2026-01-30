@@ -35,3 +35,5 @@ C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\b
 C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\obj\Debug\net9.0-windows\WootingRGB.csproj.AssemblyReference.cache
 C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\obj\Debug\net9.0-windows\WootingRGB.csproj.Up2Date
 C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\bin\Debug\net9.0-windows\Wooting.NET.dll
+C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\obj\Debug\net9.0-windows\Controls\ToggleSwitch.baml
+C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\obj\Debug\net9.0-windows\Controls\ToggleSwitch.g.cs

@@ -61,6 +61,34 @@ public class RangeParameter : IEffectParameter
     }
 }
 
+public class BooleanParameter : IEffectParameter
+{
+    public string Name { get; }
+    public string DisplayName { get; }
+    public EffectParameterType ParameterType => EffectParameterType.Boolean;
+    
+    private bool _value;
+    public object Value
+    {
+        get => _value;
+        set => _value = value is bool b ? b : (bool)DefaultValue;
+    }
+    
+    public object MinValue => false;
+    public object MaxValue => true;
+    public object DefaultValue { get; }
+
+    public bool BooleanValue => _value;
+
+    public BooleanParameter(string name, string displayName, bool defaultValue)
+    {
+        Name = name;
+        DisplayName = displayName;
+        DefaultValue = defaultValue;
+        _value = defaultValue;
+    }
+}
+
 public class ChoiceParameter : IEffectParameter
 {
     public string Name { get; }
