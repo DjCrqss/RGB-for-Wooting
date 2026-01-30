@@ -40,6 +40,7 @@ public class EffectManager
         _availableEffects.Add(new BreathingEffect(_keyboardService));
         _availableEffects.Add(new PerlinNoiseEffect(_keyboardService));
         _availableEffects.Add(new RippleEffect(_keyboardService));
+        _availableEffects.Add(new PressureBarEffect(_keyboardService));
     }
 
     public void Enable()

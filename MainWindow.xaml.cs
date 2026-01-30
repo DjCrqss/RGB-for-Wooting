@@ -243,7 +243,6 @@ namespace WootingRGB
                 case EffectParameterType.Speed:
                 case EffectParameterType.Intensity:
                 case EffectParameterType.Size:
-                case EffectParameterType.Direction:
                     if (parameter is RangeParameter rangeParam)
                     {
                         var sliderPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
@@ -344,6 +343,157 @@ namespace WootingRGB
                             else
                             {
                                 value = Math.Clamp(value, (double)rangeParam.MinValue, (double)rangeParam.MaxValue);
+                                valueTextBox.Text = $"{value:F0}";
+                                slider.Value = value;
+                            }
+                        };
+
+                        controlRow.Children.Add(slider);
+                        controlRow.Children.Add(textBoxBorder);
+                        controlRow.Children.Add(percentSymbol);
+                        sliderPanel.Children.Add(controlRow);
+                        return sliderPanel;
+                    }
+                    break;
+
+                case EffectParameterType.Direction:
+                    if (parameter is ChoiceParameter choiceParam)
+                    {
+                        var choicePanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
+                        
+                        var label = new TextBlock
+                        {
+                            Text = parameter.DisplayName,
+                            FontSize = 13,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
+                            Margin = new Thickness(0, 0, 0, 10)
+                        };
+                        choicePanel.Children.Add(label);
+
+                        var comboBox = new ComboBox
+                        {
+                            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30")),
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0")),
+                            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")),
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(10, 5, 10, 5),
+                            FontSize = 13,
+                            Height = 35,
+                            ItemsSource = choiceParam.Choices,
+                            SelectedItem = choiceParam.StringValue
+                        };
+
+                        comboBox.SelectionChanged += (s, e) =>
+                        {
+                            if (comboBox.SelectedItem is string selectedValue)
+                            {
+                                choiceParam.Value = selectedValue;
+                            }
+                        };
+
+                        choicePanel.Children.Add(comboBox);
+                        return choicePanel;
+                    }
+                    else if (parameter is RangeParameter directionRangeParam)
+                    {
+                        var sliderPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 20) };
+                        
+                        // Top row: Label
+                        var label = new TextBlock
+                        {
+                            Text = parameter.DisplayName,
+                            FontSize = 13,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
+                            Margin = new Thickness(0, 0, 0, 10)
+                        };
+                        sliderPanel.Children.Add(label);
+
+                        // Bottom row: Slider, TextBox, and % symbol
+                        var controlRow = new Grid();
+                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                        controlRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                        var slider = new Slider
+                        {
+                            Minimum = (double)directionRangeParam.MinValue,
+                            Maximum = (double)directionRangeParam.MaxValue,
+                            Value = directionRangeParam.NumericValue,
+                            TickFrequency = 1,
+                            IsSnapToTickEnabled = true,
+                            Style = (Style)FindResource("EffectSlider"),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(0, 0, 15, 0)
+                        };
+                        Grid.SetColumn(slider, 0);
+
+                        // Create a border for rounded corners
+                        var textBoxBorder = new Border
+                        {
+                            Width = 50,
+                            Height = 30,
+                            Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E1E1E")),
+                            BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#555555")),
+                            BorderThickness = new Thickness(1),
+                            CornerRadius = new CornerRadius(4),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(0, 0, 5, 0)
+                        };
+
+                        var valueTextBox = new TextBox
+                        {
+                            Text = $"{directionRangeParam.NumericValue:F0}",
+                            Background = Brushes.Transparent,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0")),
+                            BorderThickness = new Thickness(0),
+                            Padding = new Thickness(8, 5, 8, 5),
+                            FontSize = 13,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            TextAlignment = TextAlignment.Center
+                        };
+
+                        textBoxBorder.Child = valueTextBox;
+                        Grid.SetColumn(textBoxBorder, 1);
+
+                        var percentSymbol = new TextBlock
+                        {
+                            Text = "%",
+                            FontSize = 13,
+                            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#CCCCCC")),
+                            VerticalAlignment = VerticalAlignment.Center
+                        };
+                        Grid.SetColumn(percentSymbol, 2);
+
+                        // Slider updates TextBox
+                        slider.ValueChanged += (s, e) =>
+                        {
+                            directionRangeParam.Value = e.NewValue;
+                            valueTextBox.Text = $"{e.NewValue:F0}";
+                        };
+
+                        // TextBox updates slider and parameter
+                        valueTextBox.TextChanged += (s, e) =>
+                        {
+                            if (double.TryParse(valueTextBox.Text, out double value))
+                            {
+                                value = Math.Clamp(value, (double)directionRangeParam.MinValue, (double)directionRangeParam.MaxValue);
+                                if (Math.Abs(slider.Value - value) > 0.01)
+                                {
+                                    slider.Value = value;
+                                }
+                            }
+                        };
+
+                        // Handle focus loss to validate and correct input
+                        valueTextBox.LostFocus += (s, e) =>
+                        {
+                            if (!double.TryParse(valueTextBox.Text, out double value))
+                            {
+                                valueTextBox.Text = $"{slider.Value:F0}";
+                            }
+                            else
+                            {
+                                value = Math.Clamp(value, (double)directionRangeParam.MinValue, (double)directionRangeParam.MaxValue);
                                 valueTextBox.Text = $"{value:F0}";
                                 slider.Value = value;
                             }

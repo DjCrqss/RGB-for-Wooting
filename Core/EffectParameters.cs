@@ -60,3 +60,37 @@ public class RangeParameter : IEffectParameter
         _value = defaultValue;
     }
 }
+
+public class ChoiceParameter : IEffectParameter
+{
+    public string Name { get; }
+    public string DisplayName { get; }
+    public EffectParameterType ParameterType => EffectParameterType.Direction;
+    
+    private string _value;
+    public object Value
+    {
+        get => _value;
+        set => _value = value is string s && Choices.Contains(s) ? s : (string)DefaultValue;
+    }
+    
+    public object MinValue => Choices.First();
+    public object MaxValue => Choices.Last();
+    public object DefaultValue { get; }
+    
+    public IReadOnlyList<string> Choices { get; }
+    public string StringValue => _value;
+
+    public ChoiceParameter(string name, string displayName, IEnumerable<string> choices, string defaultValue)
+    {
+        Name = name;
+        DisplayName = displayName;
+        Choices = choices.ToList();
+        
+        if (!Choices.Contains(defaultValue))
+            throw new ArgumentException($"Default value '{defaultValue}' is not in the list of choices.");
+        
+        DefaultValue = defaultValue;
+        _value = defaultValue;
+    }
+}
