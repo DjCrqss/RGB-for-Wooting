@@ -1,7 +1,11 @@
 using System.Windows.Media;
+using System.Collections.Concurrent;
 using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
+using WootingRGB.lib;
+using RGB.NET.Core;
+using MediaColor = System.Windows.Media.Color;
 
 namespace WootingRGB.Effects;
 
@@ -10,7 +14,8 @@ public class PerlinNoiseEffect : BaseRGBEffect
     private readonly IKeyboardService _keyboardService;
     private readonly PerlinNoise _perlinNoise;
     private double _time = 0;
-    private Dictionary<(int row, int col), double> _keyPressDepths = new();
+    private readonly ConcurrentDictionary<(int row, int col), double> _keyPressDepths = new();
+    private static readonly Dictionary<short, (int row, int col)> _hidToPosition = InitializeHidToPositionMap();
 
     public override string Name => "Perlin Noise";
     public override string Description => "Flowing Perlin noise with analog key press interaction";
@@ -21,24 +26,151 @@ public class PerlinNoiseEffect : BaseRGBEffect
         _perlinNoise = new PerlinNoise();
     }
 
+    private static Dictionary<short, (int row, int col)> InitializeHidToPositionMap()
+    {
+        var map = new Dictionary<short, (int row, int col)>();
+        
+        foreach (var kvp in WootingAnalogLedMapping.HidCodesReversed)
+        {
+            var hidCode = kvp.Key;
+            var ledId = kvp.Value;
+            var position = GetLedIdPosition(ledId);
+            if (position.HasValue)
+            {
+                map[hidCode] = position.Value;
+            }
+        }
+        
+        return map;
+    }
+
+    private static (int row, int col)? GetLedIdPosition(LedId ledId)
+    {
+        // Map LedId to keyboard row/col positions (0-indexed)
+        // Based on standard keyboard layout
+        return ledId switch
+        {
+            // Row 0 - F keys and extras
+            LedId.Keyboard_Escape => (0, 0),
+            LedId.Keyboard_F1 => (0, 2),
+            LedId.Keyboard_F2 => (0, 3),
+            LedId.Keyboard_F3 => (0, 4),
+            LedId.Keyboard_F4 => (0, 5),
+            LedId.Keyboard_F5 => (0, 6),
+            LedId.Keyboard_F6 => (0, 7),
+            LedId.Keyboard_F7 => (0, 8),
+            LedId.Keyboard_F8 => (0, 9),
+            LedId.Keyboard_F9 => (0, 10),
+            LedId.Keyboard_F10 => (0, 11),
+            LedId.Keyboard_F11 => (0, 12),
+            LedId.Keyboard_F12 => (0, 13),
+            LedId.Keyboard_PrintScreen => (0, 14),
+            LedId.Keyboard_ScrollLock => (0, 15),
+            LedId.Keyboard_PauseBreak => (0, 16),
+
+            // Row 1 - Number row
+            LedId.Keyboard_GraveAccentAndTilde => (1, 0),
+            LedId.Keyboard_1 => (1, 1),
+            LedId.Keyboard_2 => (1, 2),
+            LedId.Keyboard_3 => (1, 3),
+            LedId.Keyboard_4 => (1, 4),
+            LedId.Keyboard_5 => (1, 5),
+            LedId.Keyboard_6 => (1, 6),
+            LedId.Keyboard_7 => (1, 7),
+            LedId.Keyboard_8 => (1, 8),
+            LedId.Keyboard_9 => (1, 9),
+            LedId.Keyboard_0 => (1, 10),
+            LedId.Keyboard_MinusAndUnderscore => (1, 11),
+            LedId.Keyboard_EqualsAndPlus => (1, 12),
+            LedId.Keyboard_Backspace => (1, 13),
+            LedId.Keyboard_Insert => (1, 14),
+            LedId.Keyboard_Home => (1, 15),
+            LedId.Keyboard_PageUp => (1, 16),
+
+            // Row 2 - QWERTY row
+            LedId.Keyboard_Tab => (2, 0),
+            LedId.Keyboard_Q => (2, 1),
+            LedId.Keyboard_W => (2, 2),
+            LedId.Keyboard_E => (2, 3),
+            LedId.Keyboard_R => (2, 4),
+            LedId.Keyboard_T => (2, 5),
+            LedId.Keyboard_Y => (2, 6),
+            LedId.Keyboard_U => (2, 7),
+            LedId.Keyboard_I => (2, 8),
+            LedId.Keyboard_O => (2, 9),
+            LedId.Keyboard_P => (2, 10),
+            LedId.Keyboard_BracketLeft => (2, 11),
+            LedId.Keyboard_BracketRight => (2, 12),
+            LedId.Keyboard_Backslash => (2, 13),
+            LedId.Keyboard_Delete => (2, 14),
+            LedId.Keyboard_End => (2, 15),
+            LedId.Keyboard_PageDown => (2, 16),
+
+            // Row 3 - ASDF row
+            LedId.Keyboard_CapsLock => (3, 0),
+            LedId.Keyboard_A => (3, 1),
+            LedId.Keyboard_S => (3, 2),
+            LedId.Keyboard_D => (3, 3),
+            LedId.Keyboard_F => (3, 4),
+            LedId.Keyboard_G => (3, 5),
+            LedId.Keyboard_H => (3, 6),
+            LedId.Keyboard_J => (3, 7),
+            LedId.Keyboard_K => (3, 8),
+            LedId.Keyboard_L => (3, 9),
+            LedId.Keyboard_SemicolonAndColon => (3, 10),
+            LedId.Keyboard_ApostropheAndDoubleQuote => (3, 11),
+            LedId.Keyboard_Enter => (3, 12),
+
+            // Row 4 - ZXCV row
+            LedId.Keyboard_LeftShift => (4, 0),
+            LedId.Keyboard_Z => (4, 1),
+            LedId.Keyboard_X => (4, 2),
+            LedId.Keyboard_C => (4, 3),
+            LedId.Keyboard_V => (4, 4),
+            LedId.Keyboard_B => (4, 5),
+            LedId.Keyboard_N => (4, 6),
+            LedId.Keyboard_M => (4, 7),
+            LedId.Keyboard_CommaAndLessThan => (4, 8),
+            LedId.Keyboard_PeriodAndBiggerThan => (4, 9),
+            LedId.Keyboard_SlashAndQuestionMark => (4, 10),
+            LedId.Keyboard_RightShift => (4, 11),
+            LedId.Keyboard_ArrowUp => (4, 14),
+
+            // Row 5 - Bottom row
+            LedId.Keyboard_LeftCtrl => (5, 0),
+            LedId.Keyboard_LeftGui => (5, 1),
+            LedId.Keyboard_LeftAlt => (5, 2),
+            LedId.Keyboard_Space => (5, 5),
+            LedId.Keyboard_RightAlt => (5, 9),
+            LedId.Keyboard_Function => (5, 10),
+            LedId.Keyboard_Application => (5, 11),
+            LedId.Keyboard_RightCtrl => (5, 12),
+            LedId.Keyboard_ArrowLeft => (5, 13),
+            LedId.Keyboard_ArrowDown => (5, 14),
+            LedId.Keyboard_ArrowRight => (5, 15),
+
+            _ => null
+        };
+    }
+
     protected override void InitializeParameters()
     {
         _parameters.Add(new ColorParameter(
             "color1",
             "Noise Color 1",
-            Color.FromRgb(0x8A, 0x2B, 0xE2) // #8A2BE2 - Blue Violet
+            MediaColor.FromRgb(0x8A, 0x2B, 0xE2) // #8A2BE2 - Blue Violet
         ));
 
         _parameters.Add(new ColorParameter(
             "color2",
             "Noise Color 2",
-            Color.FromRgb(0xFF, 0xC8, 0x00) // #FFC800 - Orange/Gold
+            MediaColor.FromRgb(0xFF, 0xC8, 0x00) // #FFC800 - Orange/Gold
         ));
 
         _parameters.Add(new ColorParameter(
             "pressColor",
             "Press Color",
-            Color.FromRgb(0x00, 0xFF, 0x5C) // #00FF5C - Bright Green
+            MediaColor.FromRgb(0x00, 0xFF, 0x5C) // #00FF5C - Bright Green
         ));
 
         _parameters.Add(new RangeParameter(
@@ -54,27 +186,27 @@ public class PerlinNoiseEffect : BaseRGBEffect
             "scale",
             "Noise Scale",
             EffectParameterType.Size,
-            defaultValue: 15,
+            defaultValue: 50,
             minValue: 5,
-            maxValue: 50
+            maxValue: 100
         ));
 
         _parameters.Add(new RangeParameter(
             "pressDepth",
             "Press Depth",
             EffectParameterType.Intensity,
-            defaultValue: 50,
+            defaultValue: 200,
             minValue: 10,
-            maxValue: 100
+            maxValue: 200
         ));
 
         _parameters.Add(new RangeParameter(
             "pressRadius",
             "Press Radius",
             EffectParameterType.Size,
-            defaultValue: 25,
+            defaultValue: 64,
             minValue: 10,
-            maxValue: 50
+            maxValue: 150
         ));
     }
 
@@ -101,9 +233,10 @@ public class PerlinNoiseEffect : BaseRGBEffect
 
         // Update key press depths with fade out
         var fadeRate = 0.05;
+        var keysToUpdate = new List<((int, int) key, double newValue)>();
         var keysToRemove = new List<(int, int)>();
         
-        foreach (var kvp in _keyPressDepths.ToList())
+        foreach (var kvp in _keyPressDepths)
         {
             var newDepth = kvp.Value - fadeRate;
             if (newDepth <= 0)
@@ -112,31 +245,37 @@ public class PerlinNoiseEffect : BaseRGBEffect
             }
             else
             {
-                _keyPressDepths[kvp.Key] = newDepth;
+                keysToUpdate.Add((kvp.Key, newDepth));
             }
         }
 
+        // Apply updates
+        foreach (var (key, value) in keysToUpdate)
+        {
+            _keyPressDepths[key] = value;
+        }
+        
         foreach (var key in keysToRemove)
         {
-            _keyPressDepths.Remove(key);
+            _keyPressDepths.TryRemove(key, out _);
         }
 
         // Update pressed keys from analog input
         foreach (var pressedKey in keyboardState.PressedKeys)
         {
-            // Convert keycode to row/col (simplified - you may need proper mapping)
             var keyCode = pressedKey.Key;
             var pressure = Math.Clamp(pressedKey.Value, 0, 1);
             
-            // Try to find key position (this is a simplified approach)
-            // In a real implementation, you'd have a keycode-to-position lookup table
-            var row = (keyCode / 100) % _keyboardService.MaxRows;
-            var col = keyCode % _keyboardService.MaxColumns;
-            
-            if (row >= 0 && row < _keyboardService.MaxRows && 
-                col >= 0 && col < _keyboardService.MaxColumns)
+            // Use the proper HID code to position mapping
+            if (_hidToPosition.TryGetValue(keyCode, out var position))
             {
-                _keyPressDepths[(row, col)] = pressure;
+                var (row, col) = position;
+                
+                if (row >= 0 && row < _keyboardService.MaxRows && 
+                    col >= 0 && col < _keyboardService.MaxColumns)
+                {
+                    _keyPressDepths[position] = pressure;
+                }
             }
         }
 
@@ -148,15 +287,12 @@ public class PerlinNoiseEffect : BaseRGBEffect
         {
             for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
-                // Generate base Perlin noise value with 3D noise for moving blobs
-                // Use time as the Z coordinate to create evolving patterns
                 var noiseX = col * scaleValue;
                 var noiseY = row * scaleValue;
                 var noiseZ = _time;
                 var noiseValue = _perlinNoise.Noise(noiseX, noiseY, noiseZ);
                 
                 // Normalize to 0-0.66 range (Perlin noise is typically -1 to 1)
-                // Add contrast enhancement to make colors more vibrant
                 noiseValue = (noiseValue + 1) * 0.5; // Normalize to 0-1
                 
                 // Apply contrast curve to make colors pop more
@@ -195,7 +331,7 @@ public class PerlinNoiseEffect : BaseRGBEffect
                 totalHeight = Math.Clamp(totalHeight, 0, 1);
 
                 // Map height to colors
-                Color finalColor;
+                MediaColor finalColor;
                 if (totalHeight <= 0.66)
                 {
                     // Interpolate between color1 and color2 for the noise range (0-0.66)
@@ -221,10 +357,10 @@ public class PerlinNoiseEffect : BaseRGBEffect
         _keyboardService.UpdateKeyboard();
     }
 
-    private Color InterpolateColor(Color start, Color end, double t)
+    private MediaColor InterpolateColor(MediaColor start, MediaColor end, double t)
     {
         t = Math.Clamp(t, 0, 1);
-        return Color.FromRgb(
+        return MediaColor.FromRgb(
             (byte)(start.R + (end.R - start.R) * t),
             (byte)(start.G + (end.G - start.G) * t),
             (byte)(start.B + (end.B - start.B) * t)
@@ -236,7 +372,7 @@ public class PerlinNoiseEffect : BaseRGBEffect
         _keyPressDepths.Clear();
     }
 
-    // Simple Perlin Noise implementation
+    
     private class PerlinNoise
     {
         private const int PermutationSize = 256;
@@ -251,36 +387,30 @@ public class PerlinNoiseEffect : BaseRGBEffect
             for (int i = 0; i < PermutationSize; i++)
                 p[i] = i;
 
-            // Shuffle
             for (int i = 0; i < PermutationSize; i++)
             {
                 int j = random.Next(PermutationSize);
                 (p[i], p[j]) = (p[j], p[i]);
             }
 
-            // Duplicate for easy wrapping
             for (int i = 0; i < PermutationSize * 2; i++)
                 _permutation[i] = p[i % PermutationSize];
         }
 
         public double Noise(double x, double y, double z)
         {
-            // Find unit cube containing point
             int X = (int)Math.Floor(x) & 255;
             int Y = (int)Math.Floor(y) & 255;
             int Z = (int)Math.Floor(z) & 255;
 
-            // Find relative position in cube
             x -= Math.Floor(x);
             y -= Math.Floor(y);
             z -= Math.Floor(z);
 
-            // Compute fade curves
             double u = Fade(x);
             double v = Fade(y);
             double w = Fade(z);
 
-            // Hash coordinates of cube corners
             int A = _permutation[X] + Y;
             int AA = _permutation[A] + Z;
             int AB = _permutation[A + 1] + Z;
@@ -288,7 +418,6 @@ public class PerlinNoiseEffect : BaseRGBEffect
             int BA = _permutation[B] + Z;
             int BB = _permutation[B + 1] + Z;
 
-            // Blend results from 8 corners
             return Lerp(w,
                 Lerp(v,
                     Lerp(u,
