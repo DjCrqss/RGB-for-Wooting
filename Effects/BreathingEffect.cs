@@ -2,6 +2,7 @@ using System.Windows.Media;
 using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
+using WootingRGB.lib;
 
 namespace WootingRGB.Effects;
 
@@ -52,7 +53,7 @@ public class BreathingEffect : BaseRGBEffect
         var elapsed = (DateTime.Now - _startTime).TotalSeconds;
         var cycle = Math.Sin(elapsed * speed / 10.0) * 0.5 + 0.5; // 0 to 1
 
-        var currentColor = InterpolateColor(color1, color2, cycle);
+        var currentColor = EffectUtilities.LerpColorTuple(color1, color2, cycle);
 
         for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
@@ -64,15 +65,5 @@ public class BreathingEffect : BaseRGBEffect
 
         _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
-    }
-
-    private (byte R, byte G, byte B) InterpolateColor(Color start, Color end, double t)
-    {
-        t = Math.Clamp(t, 0, 1);
-        return (
-            (byte)(start.R + (end.R - start.R) * t),
-            (byte)(start.G + (end.G - start.G) * t),
-            (byte)(start.B + (end.B - start.B) * t)
-        );
     }
 }

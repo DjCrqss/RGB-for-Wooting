@@ -320,29 +320,7 @@ public class RippleEffect : BaseRGBEffect
     {
         var random = new Random();
         var hue = random.NextDouble() * 360;
-        return HsvToRgb(hue, 1.0, 1.0);
-    }
-
-    private MediaColor HsvToRgb(double h, double s, double v)
-    {
-        double c = v * s;
-        double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
-        double m = v - c;
-
-        double r = 0, g = 0, b = 0;
-
-        if (h < 60) { r = c; g = x; b = 0; }
-        else if (h < 120) { r = x; g = c; b = 0; }
-        else if (h < 180) { r = 0; g = c; b = x; }
-        else if (h < 240) { r = 0; g = x; b = c; }
-        else if (h < 300) { r = x; g = 0; b = c; }
-        else { r = c; g = 0; b = x; }
-
-        return MediaColor.FromRgb(
-            (byte)Math.Round((r + m) * 255),
-            (byte)Math.Round((g + m) * 255),
-            (byte)Math.Round((b + m) * 255)
-        );
+        return EffectUtilities.HsvToRgb(hue, 1.0, 1.0);
     }
 
     public override void Cleanup()

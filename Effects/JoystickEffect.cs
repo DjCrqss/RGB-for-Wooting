@@ -145,8 +145,8 @@ public class JoystickEffect : BaseRGBEffect
         _targetY = inputY * maxOffset;
 
         // Smooth interpolation to target position
-        _currentX = _currentX * smoothingFactor + _targetX * (1 - smoothingFactor);
-        _currentY = _currentY * smoothingFactor + _targetY * (1 - smoothingFactor);
+        _currentX = EffectUtilities.Lerp(_targetX, _currentX, smoothingFactor);
+        _currentY = EffectUtilities.Lerp(_targetY, _currentY, smoothingFactor);
 
         // Render the effect
         for (int row = 0; row < _keyboardService.MaxRows; row++)
@@ -165,7 +165,7 @@ public class JoystickEffect : BaseRGBEffect
                 }
 
                 // Blend between center and edge color
-                MediaColor finalColor = BlendColors(edgeColor, centerColor, intensity);
+                MediaColor finalColor = EffectUtilities.LerpColor(edgeColor, centerColor, intensity);
                 _colorBuffer[row, col] = new KeyColour(finalColor.R, finalColor.G, finalColor.B);
             }
         }
@@ -180,9 +180,7 @@ public class JoystickEffect : BaseRGBEffect
         double offsetRow = centerRow + _currentY;
         double offsetCol = centerCol + _currentX;
 
-        double dx = col - offsetCol;
-        double dy = row - offsetRow;
-        double distance = Math.Sqrt(dx * dx + dy * dy);
+        double distance = EffectUtilities.Distance(col, row, offsetCol, offsetRow);
 
         // Normalize by radius
         double maxRadius = Math.Max(_keyboardService.MaxRows, _keyboardService.MaxColumns) * radiusMultiplier;
@@ -206,7 +204,7 @@ public class JoystickEffect : BaseRGBEffect
         double dx = Math.Abs(col - offsetCol);
         double dy = Math.Abs(row - offsetRow);
 
-        // Use Manhattan distance for cross pattern (minimum of horizontal and vertical distance)
+        // Use minimum distance for cross pattern
         double crossDistance = Math.Min(dx, dy);
 
         // Normalize by radius
@@ -220,16 +218,6 @@ public class JoystickEffect : BaseRGBEffect
         intensity = Math.Pow(intensity, 2.0);
 
         return intensity;
-    }
-
-    private MediaColor BlendColors(MediaColor color1, MediaColor color2, double t)
-    {
-        t = Math.Clamp(t, 0, 1);
-        return MediaColor.FromRgb(
-            (byte)(color1.R + (color2.R - color1.R) * t),
-            (byte)(color1.G + (color2.G - color1.G) * t),
-            (byte)(color1.B + (color2.B - color1.B) * t)
-        );
     }
 
     public override void Cleanup()

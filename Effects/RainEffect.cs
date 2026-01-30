@@ -2,6 +2,7 @@ using System.Windows.Media;
 using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
+using WootingRGB.lib;
 
 namespace WootingRGB.Effects;
 
@@ -182,7 +183,7 @@ public class RainEffect : BaseRGBEffect
         if (variation <= 0) return baseColor;
 
         // Convert RGB to HSV
-        var (h, s, v) = RgbToHsv(baseColor);
+        var (h, s, v) = EffectUtilities.RgbToHsv(baseColor);
 
         // Vary the hue - at 100% variation, full 360 degree range for rainbow rain
         var variationAmount = variation / 100.0;
@@ -190,57 +191,7 @@ public class RainEffect : BaseRGBEffect
         h = (h + hueShift + 360) % 360; // Keep in 0-360 range
 
         // Convert back to RGB
-        return HsvToRgb(h, s, v);
-    }
-
-    private (double h, double s, double v) RgbToHsv(Color color)
-    {
-        double r = color.R / 255.0;
-        double g = color.G / 255.0;
-        double b = color.B / 255.0;
-
-        double max = Math.Max(r, Math.Max(g, b));
-        double min = Math.Min(r, Math.Min(g, b));
-        double delta = max - min;
-
-        double h = 0;
-        if (delta != 0)
-        {
-            if (max == r)
-                h = 60 * (((g - b) / delta) % 6);
-            else if (max == g)
-                h = 60 * (((b - r) / delta) + 2);
-            else
-                h = 60 * (((r - g) / delta) + 4);
-        }
-        if (h < 0) h += 360;
-
-        double s = max == 0 ? 0 : delta / max;
-        double v = max;
-
-        return (h, s, v);
-    }
-
-    private Color HsvToRgb(double h, double s, double v)
-    {
-        double c = v * s;
-        double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
-        double m = v - c;
-
-        double r = 0, g = 0, b = 0;
-
-        if (h < 60) { r = c; g = x; b = 0; }
-        else if (h < 120) { r = x; g = c; b = 0; }
-        else if (h < 180) { r = 0; g = c; b = x; }
-        else if (h < 240) { r = 0; g = x; b = c; }
-        else if (h < 300) { r = x; g = 0; b = c; }
-        else { r = c; g = 0; b = x; }
-
-        return Color.FromRgb(
-            (byte)Math.Round((r + m) * 255),
-            (byte)Math.Round((g + m) * 255),
-            (byte)Math.Round((b + m) * 255)
-        );
+        return EffectUtilities.HsvToRgb(h, s, v);
     }
 
     public override void Cleanup()

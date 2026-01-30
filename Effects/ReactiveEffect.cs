@@ -2,6 +2,7 @@ using System.Windows.Media;
 using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
+using WootingRGB.lib;
 
 namespace WootingRGB.Effects;
 
@@ -108,7 +109,7 @@ public class ReactiveEffect : BaseRGBEffect
         foreach (var kvp in _keyIntensities)
         {
             var intensity = kvp.Value;
-            var color = InterpolateColor(releaseColor, pressColor, intensity);
+            var color = EffectUtilities.LerpColor(releaseColor, pressColor, intensity);
 
             _colorBuffer[kvp.Key.row, kvp.Key.col] = new KeyColour(
                 (byte)(color.R * intensity),
@@ -119,16 +120,6 @@ public class ReactiveEffect : BaseRGBEffect
 
         _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
-    }
-
-    private Color InterpolateColor(Color start, Color end, double t)
-    {
-        t = Math.Clamp(t, 0, 1);
-        return Color.FromRgb(
-            (byte)(start.R + (end.R - start.R) * t),
-            (byte)(start.G + (end.G - start.G) * t),
-            (byte)(start.B + (end.B - start.B) * t)
-        );
     }
 
     public override void Cleanup()

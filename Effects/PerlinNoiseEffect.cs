@@ -201,13 +201,13 @@ public class PerlinNoiseEffect : BaseRGBEffect
                 {
                     // Interpolate between color1 and color2 for the noise range (0-0.66)
                     var noiseT = totalHeight / 0.66;
-                    finalColor = InterpolateColor(color1, color2, noiseT);
+                    finalColor = EffectUtilities.LerpColor(color1, color2, noiseT);
                 }
                 else
                 {
                     // Interpolate from color2 to pressColor for the press range (0.66-1.0)
                     var pressT = (totalHeight - 0.66) / 0.34;
-                    finalColor = InterpolateColor(color2, pressColor, pressT);
+                    finalColor = EffectUtilities.LerpColor(color2, pressColor, pressT);
                 }
 
                 _colorBuffer[row, col] = new KeyColour(
@@ -220,16 +220,6 @@ public class PerlinNoiseEffect : BaseRGBEffect
 
         _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
-    }
-
-    private MediaColor InterpolateColor(MediaColor start, MediaColor end, double t)
-    {
-        t = Math.Clamp(t, 0, 1);
-        return MediaColor.FromRgb(
-            (byte)(start.R + (end.R - start.R) * t),
-            (byte)(start.G + (end.G - start.G) * t),
-            (byte)(start.B + (end.B - start.B) * t)
-        );
     }
 
     public override void Cleanup()

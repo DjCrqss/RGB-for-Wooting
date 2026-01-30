@@ -3,6 +3,7 @@ using System.Windows.Media;
 using Wooting;
 using WootingRGB.Core;
 using WootingRGB.Services;
+using WootingRGB.lib;
 
 namespace WootingRGB.Effects;
 
@@ -126,12 +127,12 @@ public class FireEffect : BaseRGBEffect
                 if (heat < 0.25)
                 {
                     var fadeProgress = heat / 0.25; // 0 to 1
-                    color = InterpolateColor(Colors.Black, coldColor, fadeProgress);
+                    color = EffectUtilities.LerpColor(Colors.Black, coldColor, fadeProgress);
                 }
                 else
                 {
                     var flameProgress = (heat - 0.25) / 0.75; // 0 to 1
-                    color = InterpolateColor(coldColor, hotColor, flameProgress);
+                    color = EffectUtilities.LerpColor(coldColor, hotColor, flameProgress);
                 }
 
                 _colorBuffer[row, col] = new KeyColour(color.R, color.G, color.B);
@@ -140,16 +141,6 @@ public class FireEffect : BaseRGBEffect
 
         _keyboardService.SetFullKeyboard(_colorBuffer);
         _keyboardService.UpdateKeyboard();
-    }
-
-    private Color InterpolateColor(Color start, Color end, double t)
-    {
-        t = Math.Clamp(t, 0, 1);
-        return Color.FromRgb(
-            (byte)(start.R + (end.R - start.R) * t),
-            (byte)(start.G + (end.G - start.G) * t),
-            (byte)(start.B + (end.B - start.B) * t)
-        );
     }
 
     public override void Cleanup()
