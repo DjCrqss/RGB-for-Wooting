@@ -5,6 +5,7 @@ using WootingRGB.Core;
 using WootingRGB.Services;
 using WootingRGB.lib;
 using MediaColor = System.Windows.Media.Color;
+using System.Diagnostics;
 
 namespace WootingRGB.Effects;
 
@@ -12,6 +13,7 @@ public class RippleEffect : BaseRGBEffect
 {
     private readonly IKeyboardService _keyboardService;
     private readonly ConcurrentDictionary<short, double> _deepestPressure = new();
+    private readonly ConcurrentDictionary<short, double> _lastPressure = new();
     private readonly List<Ripple> _activeRipples = new();
     private readonly object _ripplesLock = new();
 
@@ -39,14 +41,20 @@ public class RippleEffect : BaseRGBEffect
         _parameters.Add(new ColorParameter(
             "rippleColor",
             "Ripple Color",
-            MediaColor.FromRgb(0x00, 0xFF, 0xFF) // Cyan
+            MediaColor.FromRgb(0x6F, 0xC5, 0xFF) // #6FC5FF
+        ));
+
+        _parameters.Add(new ColorParameter(
+            "backgroundColor",
+            "Background Color",
+            MediaColor.FromRgb(0x14, 0x26, 0x57) // #142657
         ));
 
         _parameters.Add(new RangeParameter(
             "spreadSpeed",
             "Spread Speed",
             EffectParameterType.Speed,
-            defaultValue: 20,
+            defaultValue: 13,
             minValue: 1,
             maxValue: 100
         ));
@@ -61,10 +69,10 @@ public class RippleEffect : BaseRGBEffect
         ));
 
         _parameters.Add(new RangeParameter(
-            "baseBrightness",
-            "Base Brightness",
+            "velocityInfluence",
+            "Velocity Influence",
             EffectParameterType.Intensity,
-            defaultValue: 12,
+            defaultValue: 75,
             minValue: 0,
             maxValue: 100
         ));
@@ -92,6 +100,7 @@ public class RippleEffect : BaseRGBEffect
     {
         base.Initialize();
         _deepestPressure.Clear();
+        _lastPressure.Clear();
         lock (_ripplesLock)
         {
             _activeRipples.Clear();
@@ -103,9 +112,10 @@ public class RippleEffect : BaseRGBEffect
         if (_colorBuffer == null) return;
 
         var rippleColor = GetParameter<ColorParameter>("rippleColor")?.ColorValue ?? MediaColor.FromRgb(0, 255, 255);
-        var spreadSpeed = GetParameter<RangeParameter>("spreadSpeed")?.NumericValue ?? 20;
+        var backgroundColor = GetParameter<ColorParameter>("backgroundColor")?.ColorValue ?? MediaColor.FromRgb(0, 0, 0);
+        var spreadSpeed = GetParameter<RangeParameter>("spreadSpeed")?.NumericValue ?? 13;
         var fadeSpeed = GetParameter<RangeParameter>("fadeSpeed")?.NumericValue ?? 45;
-        var baseBrightness = GetParameter<RangeParameter>("baseBrightness")?.NumericValue ?? 12;
+        var velocityInfluence = GetParameter<RangeParameter>("velocityInfluence")?.NumericValue ?? 50;
         var randomColors = GetParameter<RangeParameter>("randomColors")?.NumericValue ?? 0;
         var inverted = GetParameter<RangeParameter>("inverted")?.NumericValue ?? 0;
 
@@ -121,11 +131,19 @@ public class RippleEffect : BaseRGBEffect
             // Only track keys with significant pressure
             if (pressure > 0.01)
             {
-                // Check if this is a new press or if pressure decreased (release starting)
+                // Get last pressure for this key
+                var lastPressure = _lastPressure.GetValueOrDefault(keyCode, 0);
+                
+                // Check if this is a new press or if pressure changed
                 if (_deepestPressure.TryGetValue(keyCode, out var deepest))
                 {
-                    // If pressure decreased from deepest, trigger ripple
-                    if (pressure < deepest - 0.05) // Threshold to avoid noise
+                    // If pressure increased from last frame, update deepest and reset
+                    if (pressure > lastPressure)
+                    {
+                        _deepestPressure[keyCode] = pressure;
+                    }
+                    // If pressure decreased significantly from deepest, trigger ripple
+                    else if (pressure < deepest - 0.15)
                     {
                         // Get key position
                         if (WootingAnalogLedMapping.HidToPosition.TryGetValue(keyCode, out var position))
@@ -135,15 +153,20 @@ public class RippleEffect : BaseRGBEffect
                             if (row >= 0 && row < _keyboardService.MaxRows && 
                                 col >= 0 && col < _keyboardService.MaxColumns)
                             {
-                                // Create ripple based on deepest pressure
+                                // Calculate release velocity based on pressure drop
+                                var pressureDrop = deepest - pressure;
+                                var velocityMultiplier = 1 + (pressureDrop * (velocityInfluence / 50.0) * 4.0);
+                                velocityMultiplier = Math.Clamp(velocityMultiplier, 0.5, 6.0);
+
+                                // Create ripple
                                 var ripple = new Ripple
                                 {
                                     Row = row,
                                     Col = col,
                                     Radius = 0,
-                                    MaxRadius = 5 + (deepest * 15), // 5-20 based on deepest pressure
-                                    Speed = (spreadSpeed / 100.0) * 0.5 * (0.5 + deepest * 0.5), // Faster with more pressure
-                                    Intensity = deepest, // Use deepest pressure for brightness
+                                    MaxRadius = 5 + (deepest * 15),
+                                    Speed = (spreadSpeed / 100.0) * 0.5 * velocityMultiplier,
+                                    Intensity = deepest,
                                     Color = useRandomColors ? GetRandomColor() : rippleColor
                                 };
 
@@ -151,18 +174,10 @@ public class RippleEffect : BaseRGBEffect
                                 {
                                     _activeRipples.Add(ripple);
                                 }
+                                
+                                // Reset deepest for this key to current pressure
+                                _deepestPressure[keyCode] = 0;
                             }
-                        }
-                        
-                        // Reset tracking for this key
-                        _deepestPressure.TryRemove(keyCode, out _);
-                    }
-                    else
-                    {
-                        // Update deepest pressure if current is higher
-                        if (pressure > deepest)
-                        {
-                            _deepestPressure[keyCode] = pressure;
                         }
                     }
                 }
@@ -171,44 +186,54 @@ public class RippleEffect : BaseRGBEffect
                     // New key press - start tracking
                     _deepestPressure[keyCode] = pressure;
                 }
+                
+                // Update last pressure
+                _lastPressure[keyCode] = pressure;
             }
         }
 
-        // Clean up keys that are no longer pressed at all
+        // Clean up keys that are no longer pressed
         var currentKeys = new HashSet<short>(keyboardState.PressedKeys.Keys);
         var keysToRemove = _deepestPressure.Keys.Where(k => !currentKeys.Contains(k)).ToList();
         
         foreach (var keyCode in keysToRemove)
         {
-            var deepest = _deepestPressure[keyCode];
-            
-            // Create final ripple on complete release
-            if (WootingAnalogLedMapping.HidToPosition.TryGetValue(keyCode, out var position))
+            // Key was released - always trigger a ripple if we were tracking it
+            if (_deepestPressure.TryGetValue(keyCode, out var deepest))
             {
-                var (row, col) = position;
-                
-                if (row >= 0 && row < _keyboardService.MaxRows && 
-                    col >= 0 && col < _keyboardService.MaxColumns)
+                if (WootingAnalogLedMapping.HidToPosition.TryGetValue(keyCode, out var position))
                 {
-                    var ripple = new Ripple
+                    var (row, col) = position;
+                    
+                    if (row >= 0 && row < _keyboardService.MaxRows && 
+                        col >= 0 && col < _keyboardService.MaxColumns)
                     {
-                        Row = row,
-                        Col = col,
-                        Radius = 0,
-                        MaxRadius = 5 + (deepest * 15),
-                        Speed = (spreadSpeed / 100.0) * 0.5 * (0.5 + deepest * 0.5),
-                        Intensity = deepest,
-                        Color = useRandomColors ? GetRandomColor() : rippleColor
-                    };
+                        // Use deepest as the pressure drop (fast release from deepest to 0)
+                        var pressureDrop = deepest;
+                        var velocityMultiplier = 1.0 + (pressureDrop * (velocityInfluence / 50.0) * 4.0);
+                        velocityMultiplier = Math.Clamp(velocityMultiplier, 0.5, 3.0);
 
-                    lock (_ripplesLock)
-                    {
-                        _activeRipples.Add(ripple);
+                        var ripple = new Ripple
+                        {
+                            Row = row,
+                            Col = col,
+                            Radius = 0,
+                            MaxRadius = 5 + (deepest * 15),
+                            Speed = (spreadSpeed / 100.0) * 0.5 * velocityMultiplier,
+                            Intensity = deepest,
+                            Color = useRandomColors ? GetRandomColor() : rippleColor
+                        };
+
+                        lock (_ripplesLock)
+                        {
+                            _activeRipples.Add(ripple);
+                        }
                     }
                 }
             }
             
             _deepestPressure.TryRemove(keyCode, out _);
+            _lastPressure.TryRemove(keyCode, out _);
         }
 
         // Update ripples
@@ -233,14 +258,12 @@ public class RippleEffect : BaseRGBEffect
         }
 
         // Render
-        var baseIntensity = baseBrightness / 100.0;
-        
         for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
             for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
-                double totalIntensity = baseIntensity;
-                MediaColor finalColor = MediaColor.FromRgb(0, 0, 0);
+                double rippleIntensity = 0;
+                MediaColor activeRippleColor = backgroundColor;
 
                 lock (_ripplesLock)
                 {
@@ -260,28 +283,32 @@ public class RippleEffect : BaseRGBEffect
                             // Calculate intensity based on distance from ring center
                             var ringIntensity = (1.0 - (distanceFromRing / ringThickness)) * ripple.Intensity;
                             
-                            if (ringIntensity > totalIntensity)
+                            if (ringIntensity > rippleIntensity)
                             {
-                                totalIntensity = ringIntensity;
-                                finalColor = ripple.Color;
+                                rippleIntensity = ringIntensity;
+                                activeRippleColor = ripple.Color;
                             }
                         }
                     }
                 }
 
-                // Apply inverted mode if enabled
-                if (isInverted && totalIntensity > baseIntensity)
+                // Blend ripple with background based on ripple intensity
+                MediaColor finalColor;
+                if (rippleIntensity > 0)
                 {
-                    totalIntensity = baseIntensity + (1.0 - totalIntensity);
+                    // Interpolate between background and ripple color
+                    finalColor = MediaColor.FromRgb(
+                        (byte)(backgroundColor.R * (1 - rippleIntensity) + activeRippleColor.R * rippleIntensity),
+                        (byte)(backgroundColor.G * (1 - rippleIntensity) + activeRippleColor.G * rippleIntensity),
+                        (byte)(backgroundColor.B * (1 - rippleIntensity) + activeRippleColor.B * rippleIntensity)
+                    );
+                }
+                else
+                {
+                    finalColor = backgroundColor;
                 }
 
-                totalIntensity = Math.Clamp(totalIntensity, 0, 1);
-
-                _colorBuffer[row, col] = new KeyColour(
-                    (byte)(finalColor.R * totalIntensity),
-                    (byte)(finalColor.G * totalIntensity),
-                    (byte)(finalColor.B * totalIntensity)
-                );
+                _colorBuffer[row, col] = new KeyColour(finalColor.R, finalColor.G, finalColor.B);
             }
         }
 
@@ -321,6 +348,7 @@ public class RippleEffect : BaseRGBEffect
     public override void Cleanup()
     {
         _deepestPressure.Clear();
+        _lastPressure.Clear();
         lock (_ripplesLock)
         {
             _activeRipples.Clear();

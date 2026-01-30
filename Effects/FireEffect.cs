@@ -58,7 +58,7 @@ public class FireEffect : BaseRGBEffect
     public override void Initialize()
     {
         base.Initialize();
-        _heatMap = new double[_keyboardService.MaxRows, _keyboardService.MaxColumns];
+        _heatMap = new double[_keyboardService!.MaxRows, _keyboardService.MaxColumns];
         _noiseOffsets = new double[_keyboardService.MaxColumns];
         
         // Initialize random noise offsets for each column
@@ -81,7 +81,7 @@ public class FireEffect : BaseRGBEffect
 
         _time += speed * 0.01;
 
-        for (int col = 0; col < _keyboardService.MaxColumns; col++)
+        for (int col = 0; col < _keyboardService!.MaxColumns; col++)
         {
             // Create smooth noise using sine waves
             var noiseValue = Math.Sin(_time + _noiseOffsets[col]) * 0.5 + 0.5; // 0 to 1

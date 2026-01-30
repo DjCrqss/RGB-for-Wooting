@@ -35,6 +35,9 @@ namespace WootingRGB
             _effectManager.EffectChanged += OnEffectChanged;
 
             InitializeEffectButtons();
+            
+            // Start with effect buttons disabled
+            EnableEffectButtons(false);
         }
 
         private void InitializeEffectButtons()
@@ -63,6 +66,7 @@ namespace WootingRGB
 
                 if (kbSuccess && analogSuccess)
                 {
+                    _effectManager.Enable();
                     StatusText.Text = "Connected";
                     StatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4EC9B0"));
                     DeviceCountText.Text = $"{_keyboardService.DeviceCount} device(s) found";
@@ -79,7 +83,7 @@ namespace WootingRGB
             }
             else
             {
-                _effectManager.StopCurrentEffect();
+                _effectManager.Disable();
                 _analogInputService.Shutdown();
                 _keyboardService.Shutdown();
 
@@ -89,6 +93,16 @@ namespace WootingRGB
                 ConnectButton.Content = "Connect";
                 EnableEffectButtons(false);
                 ClearParametersPanel();
+                
+                // Clear selected effect button highlight
+                foreach (var child in EffectButtonsPanel.Children)
+                {
+                    if (child is Button btn)
+                    {
+                        btn.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2D2D30"));
+                        btn.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
+                    }
+                }
             }
         }
 
@@ -105,6 +119,11 @@ namespace WootingRGB
 
         private void EffectButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!_keyboardService.IsInitialized)
+            {
+                return;
+            }
+
             if (sender is Button button && button.Tag is IRGBEffect effect)
             {
                 _effectManager.SetEffect(effect);

@@ -39,7 +39,10 @@ public abstract class BaseRGBEffect : IRGBEffect
 
     protected void InitializeColorBuffer()
     {
+        Debug.WriteLine(RGBControl.MaxRGBRows + " " + RGBControl.MaxRGBCols);
         _colorBuffer = new KeyColour[RGBControl.MaxRGBRows, RGBControl.MaxRGBCols];
+
+        ClearBuffer();
     }
 
     protected void SetPixel(int row, int col, byte r, byte g, byte b)

@@ -15,6 +15,7 @@ public class EffectManager
 
     public IRGBEffect? CurrentEffect => _currentEffect;
     public IReadOnlyList<IRGBEffect> AvailableEffects => _availableEffects.AsReadOnly();
+    public bool IsEnabled { get; private set; }
 
     public event EventHandler<IRGBEffect?>? EffectChanged;
 
@@ -23,6 +24,7 @@ public class EffectManager
         _keyboardService = keyboardService;
         _analogInputService = analogInputService;
         _availableEffects = new List<IRGBEffect>();
+        IsEnabled = false;
         
         RegisterAllEffects();
     }
@@ -40,8 +42,25 @@ public class EffectManager
         _availableEffects.Add(new RippleEffect(_keyboardService));
     }
 
+    public void Enable()
+    {
+        IsEnabled = true;
+    }
+
+    public void Disable()
+    {
+        IsEnabled = false;
+        StopCurrentEffect();
+    }
+
     public void SetEffect(IRGBEffect effect)
     {
+        if (!_keyboardService.IsInitialized)
+        {
+            Debug.WriteLine("Cannot set effect: keyboard service not initialized");
+            return;
+        }
+
         StopCurrentEffect();
 
         _currentEffect = effect;
@@ -62,7 +81,10 @@ public class EffectManager
             _currentEffect = null;
         }
 
-        _keyboardService.ResetKeyboard();
+        if (_keyboardService.IsInitialized)
+        {
+            _keyboardService.ResetKeyboard();
+        }
     }
 
     private void StartUpdateLoop()
@@ -77,7 +99,7 @@ public class EffectManager
 
     private void UpdateEffect()
     {
-        if (_currentEffect == null)
+        if (_currentEffect == null || !IsEnabled || !_keyboardService.IsInitialized)
             return;
 
         var keyboardState = _analogInputService.ReadKeyboardState();

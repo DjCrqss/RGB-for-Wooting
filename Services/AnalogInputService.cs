@@ -45,7 +45,6 @@ public class AnalogInputService
                 {
                     state.PressedKeys[analog.Item1] = analog.Item2;
                 }
-                Debug.WriteLine($"Read {keys.Count} keys from keyboard state");
             }
         }
         catch (Exception ex)
