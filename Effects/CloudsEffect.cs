@@ -94,8 +94,8 @@ public class CloudsEffect : BaseRGBEffect
                 var skyColor = EffectUtilities.LerpColor(skyColor1, skyColor2, verticalPosition);
 
                 // Generate Simplex noise across whole keyboard
-                // Use only X axis for horizontal cloud movement
-                var noiseX = col * scaleValue + _time;
+                // Stretch X axis by 0.5 to make clouds wider horizontally
+                var noiseX = (col * scaleValue + _time) * 0.5;
                 var noiseY = row * scaleValue;
                 
                 var noiseValue = _simplexNoise.Noise(noiseX, noiseY);
