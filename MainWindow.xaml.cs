@@ -48,7 +48,8 @@ namespace WootingRGB
             {
                 ["Basic"] = new List<IRGBEffect>(),
                 ["Advanced"] = new List<IRGBEffect>(),
-                ["Hall Effect"] = new List<IRGBEffect>()
+                ["Hall Effect"] = new List<IRGBEffect>(),
+                ["Archived"] = new List<IRGBEffect>()
             };
 
             // Categorize effects
@@ -56,11 +57,10 @@ namespace WootingRGB
             {
                 switch (effect.Name)
                 {
-                    case "Static Color":
-                    case "Rainbow":
                     case "Rain":
                     case "Sparkles":
                     case "Breathing":
+                    case "Clouds":
                         categories["Basic"].Add(effect);
                         break;
                     case "Fire":
@@ -70,7 +70,12 @@ namespace WootingRGB
                     case "Ripple":
                     case "Pressure Bars":
                     case "Joystick":
+                    case "Heatmap":
                         categories["Hall Effect"].Add(effect);
+                        break;
+                    case "Static Color":
+                    case "Rainbow":
+                        categories["Archived"].Add(effect);
                         break;
                     default:
                         // If an effect doesn't match, put it in Advanced
@@ -88,7 +93,7 @@ namespace WootingRGB
                 var expander = new Expander
                 {
                     Header = category.Key,
-                    IsExpanded = true,
+                    IsExpanded = category.Key != "Archived", // Archived starts collapsed
                     Margin = new Thickness(0, 0, 0, 10),
                     Style = (Style)FindResource("CategoryExpander")
                 };
