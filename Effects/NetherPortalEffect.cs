@@ -50,7 +50,7 @@ public class NetherPortalEffect : BaseRGBEffect
             "Swirl Intensity",
             EffectParameterType.Intensity,
             defaultValue: 60,
-            minValue: 10,
+            minValue: 30,
             maxValue: 100
         ));
 
@@ -59,7 +59,7 @@ public class NetherPortalEffect : BaseRGBEffect
             "Turbulence",
             EffectParameterType.Intensity,
             defaultValue: 50,
-            minValue: 10,
+            minValue: 20,
             maxValue: 100
         ));
     }

@@ -53,7 +53,7 @@ public class PressureBarEffect : BaseRGBEffect
             "Fade Speed",
             EffectParameterType.Speed,
             defaultValue: 30,
-            minValue: 1,
+            minValue: 10,
             maxValue: 100
         ));
 
@@ -62,7 +62,7 @@ public class PressureBarEffect : BaseRGBEffect
             "Sensitivity",
             EffectParameterType.Intensity,
             defaultValue: 100,
-            minValue: 1,
+            minValue: 25,
             maxValue: 200
         ));
     }

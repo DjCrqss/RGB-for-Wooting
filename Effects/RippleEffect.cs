@@ -56,7 +56,7 @@ public class RippleEffect : BaseRGBEffect
             EffectParameterType.Speed,
             defaultValue: 13,
             minValue: 1,
-            maxValue: 100
+            maxValue: 30
         ));
 
         _parameters.Add(new RangeParameter(
@@ -73,7 +73,7 @@ public class RippleEffect : BaseRGBEffect
             "Velocity Influence",
             EffectParameterType.Intensity,
             defaultValue: 75,
-            minValue: 0,
+            minValue: 30,
             maxValue: 100
         ));
 

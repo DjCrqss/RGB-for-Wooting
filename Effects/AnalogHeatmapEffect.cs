@@ -37,9 +37,9 @@ public class AnalogHeatmapEffect : BaseRGBEffect
             "decaySpeed",
             "Decay Speed",
             EffectParameterType.Speed,
-            defaultValue: 50,
+            defaultValue: 100,
             minValue: 1,
-            maxValue: 100
+            maxValue: 200
         ));
 
         _parameters.Add(new RangeParameter(
@@ -48,7 +48,7 @@ public class AnalogHeatmapEffect : BaseRGBEffect
             EffectParameterType.Intensity,
             defaultValue: 20,
             minValue: 1,
-            maxValue: 100
+            maxValue: 40
         ));
 
         _parameters.Add(new ColorParameter(

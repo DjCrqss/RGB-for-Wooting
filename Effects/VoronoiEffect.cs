@@ -42,7 +42,7 @@ public class VoronoiEffect : BaseRGBEffect
             EffectParameterType.Speed,
             defaultValue: 3,
             minValue: 1,
-            maxValue: 100
+            maxValue: 10
         ));
 
         _parameters.Add(new RangeParameter(
@@ -59,7 +59,7 @@ public class VoronoiEffect : BaseRGBEffect
             "Border Width",
             EffectParameterType.Intensity,
             defaultValue: 50,
-            minValue: 1,
+            minValue: 25,
             maxValue: 50
         ));
     }

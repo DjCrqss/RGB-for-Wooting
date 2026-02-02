@@ -59,8 +59,8 @@ public class JoystickEffect : BaseRGBEffect
             "Range",
             EffectParameterType.Intensity,
             defaultValue: 20,
-            minValue: 10,
-            maxValue: 100
+            minValue: 5,
+            maxValue: 50
         ));
 
         _parameters.Add(new RangeParameter(
@@ -68,7 +68,7 @@ public class JoystickEffect : BaseRGBEffect
             "Smoothing",
             EffectParameterType.Intensity,
             defaultValue: 70,
-            minValue: 0,
+            minValue: 30,
             maxValue: 100
         ));
 
@@ -77,8 +77,8 @@ public class JoystickEffect : BaseRGBEffect
             "Gradient Radius",
             EffectParameterType.Intensity,
             defaultValue: 20,
-            minValue: 10,
-            maxValue: 200
+            minValue: 5,
+            maxValue: 60
         ));
 
         _parameters.Add(new BooleanParameter(

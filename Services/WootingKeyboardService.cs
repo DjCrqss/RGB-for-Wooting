@@ -9,6 +9,7 @@ public class WootingKeyboardService : IKeyboardService
     private RGBDeviceInfo[]? _availableDevices;
     private int _selectedDeviceIndex = 0;
     private bool _multiDeviceMode = false;
+    private readonly object _lock = new object();
 
     public bool IsInitialized { get; private set; }
     public int DeviceCount { get; private set; }
@@ -20,37 +21,40 @@ public class WootingKeyboardService : IKeyboardService
 
     public bool Initialize()
     {
-        try
+        lock (_lock)
         {
-            if (!RGBControl.IsConnected())
+            try
+            {
+                if (!RGBControl.IsConnected())
+                    return false;
+
+                var count = RGBControl.GetDeviceCount();
+                _availableDevices = new RGBDeviceInfo[count];
+
+                for (byte i = 0; i < count; i++)
+                {
+                    RGBControl.SetControlDevice(i);
+                    var device = RGBControl.GetDeviceInfo();
+                    Debug.WriteLine($"Found device {i}: Connected: {device.Connected}, Model: {device.Model}, Type: {device.DeviceType}, Max Rows: {device.MaxRows}, Max Cols: {device.MaxColumns}");
+                    _availableDevices[i] = device;
+                }
+
+                DeviceCount = count;
+                
+                // Set first device as default
+                if (count > 0)
+                {
+                    SetDevice(0);
+                }
+
+                IsInitialized = true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to initialize keyboard: {ex.Message}");
                 return false;
-
-            var count = RGBControl.GetDeviceCount();
-            _availableDevices = new RGBDeviceInfo[count];
-
-            for (byte i = 0; i < count; i++)
-            {
-                RGBControl.SetControlDevice(i);
-                var device = RGBControl.GetDeviceInfo();
-                Debug.WriteLine($"Found device {i}: Connected: {device.Connected}, Model: {device.Model}, Type: {device.DeviceType}, Max Rows: {device.MaxRows}, Max Cols: {device.MaxColumns}");
-                _availableDevices[i] = device;
             }
-
-            DeviceCount = count;
-            
-            // Set first device as default
-            if (count > 0)
-            {
-                SetDevice(0);
-            }
-
-            IsInitialized = true;
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Failed to initialize keyboard: {ex.Message}");
-            return false;
         }
     }
 
@@ -112,100 +116,112 @@ public class WootingKeyboardService : IKeyboardService
 
     public void Shutdown()
     {
-        try
+        lock (_lock)
         {
-            RGBControl.Close();
-            Debug.WriteLine("Keyboard service shutdown");
-            IsInitialized = false;
-            _availableDevices = null;
-            _multiDeviceMode = false;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Error shutting down keyboard: {ex.Message}");
+            try
+            {
+                RGBControl.Close();
+                Debug.WriteLine("Keyboard service shutdown");
+                IsInitialized = false;
+                _availableDevices = null;
+                _multiDeviceMode = false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error shutting down keyboard: {ex.Message}");
+            }
         }
     }
 
     public void SetFullKeyboard(KeyColour[,] colors)
     {
-        if (!IsInitialized) return;
-
-        if (_multiDeviceMode && _availableDevices != null)
+        lock (_lock)
         {
-            // Send to all devices
-            for (byte i = 0; i < _availableDevices.Length; i++)
+            if (!IsInitialized) return;
+
+            if (_multiDeviceMode && _availableDevices != null)
             {
-                try
+                // Send to all devices
+                for (byte i = 0; i < _availableDevices.Length; i++)
                 {
-                    RGBControl.SetControlDevice(i);
-                    RGBControl.SetFull(colors);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error setting colors on device {i}: {ex.Message}");
+                    try
+                    {
+                        RGBControl.SetControlDevice(i);
+                        RGBControl.SetFull(colors);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error setting colors on device {i}: {ex.Message}");
+                    }
                 }
             }
-        }
-        else
-        {
-            // Single device mode
-            RGBControl.SetFull(colors);
+            else
+            {
+                // Single device mode
+                RGBControl.SetFull(colors);
+            }
         }
     }
 
     public void UpdateKeyboard()
     {
-        if (!IsInitialized) return;
-
-        if (_multiDeviceMode && _availableDevices != null)
+        lock (_lock)
         {
-            // Update all devices
-            for (byte i = 0; i < _availableDevices.Length; i++)
+            if (!IsInitialized) return;
+
+            if (_multiDeviceMode && _availableDevices != null)
             {
-                try
+                // Update all devices
+                for (byte i = 0; i < _availableDevices.Length; i++)
                 {
-                    RGBControl.SetControlDevice(i);
-                    RGBControl.UpdateKeyboard();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error updating device {i}: {ex.Message}");
+                    try
+                    {
+                        RGBControl.SetControlDevice(i);
+                        RGBControl.UpdateKeyboard();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error updating device {i}: {ex.Message}");
+                    }
                 }
             }
-        }
-        else
-        {
-            // Single device mode
-            RGBControl.UpdateKeyboard();
+            else
+            {
+                // Single device mode
+                RGBControl.UpdateKeyboard();
+            }
         }
     }
 
     public void ResetKeyboard()
     {
-        if (!IsInitialized) return;
-
-        if (_multiDeviceMode && _availableDevices != null)
+        lock (_lock)
         {
-            // Reset all devices
-            for (byte i = 0; i < _availableDevices.Length; i++)
+            if (!IsInitialized) return;
+
+            if (_multiDeviceMode && _availableDevices != null)
             {
-                try
+                // Reset all devices
+                for (byte i = 0; i < _availableDevices.Length; i++)
                 {
-                    RGBControl.SetControlDevice(i);
-                    RGBControl.ResetRGB();
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error resetting device {i}: {ex.Message}");
+                    try
+                    {
+                        RGBControl.SetControlDevice(i);
+                        RGBControl.ResetRGB();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error resetting device {i}: {ex.Message}");
+                    }
                 }
             }
+            else
+            {
+                // Single device mode
+                RGBControl.ResetRGB();
+            }
+            
+            Debug.WriteLine("Reset keyboard to default");
         }
-        else
-        {
-            // Single device mode
-            RGBControl.ResetRGB();
-        }
-        
-        Debug.WriteLine("Reset keyboard to default");
     }
 }

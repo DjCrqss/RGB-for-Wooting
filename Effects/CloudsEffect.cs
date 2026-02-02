@@ -42,7 +42,7 @@ public class CloudsEffect : BaseRGBEffect
             EffectParameterType.Speed,
             defaultValue: 11,
             minValue: 1,
-            maxValue: 100
+            maxValue: 25
         ));
 
         _parameters.Add(new RangeParameter(
@@ -50,8 +50,8 @@ public class CloudsEffect : BaseRGBEffect
             "Cloud Density",
             EffectParameterType.Size,
             defaultValue: 100,
-            minValue: 10,
-            maxValue: 100
+            minValue: 75,
+            maxValue: 125
         ));
 
         _parameters.Add(new RangeParameter(

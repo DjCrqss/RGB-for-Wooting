@@ -46,11 +46,11 @@ public class PerlinNoiseEffect : BaseRGBEffect
 
         _parameters.Add(new RangeParameter(
             "speed",
-            "Flow Speed",
+            "Animation Speed",
             EffectParameterType.Speed,
-            defaultValue: 25,
+            defaultValue: 10,
             minValue: 1,
-            maxValue: 50
+            maxValue: 20
         ));
 
         _parameters.Add(new RangeParameter(
@@ -67,8 +67,8 @@ public class PerlinNoiseEffect : BaseRGBEffect
             "Press Depth",
             EffectParameterType.Intensity,
             defaultValue: 200,
-            minValue: 10,
-            maxValue: 200
+            minValue: 150,
+            maxValue: 250
         ));
 
         _parameters.Add(new RangeParameter(
@@ -76,7 +76,7 @@ public class PerlinNoiseEffect : BaseRGBEffect
             "Press Radius",
             EffectParameterType.Size,
             defaultValue: 64,
-            minValue: 10,
+            minValue: 30,
             maxValue: 150
         ));
     }

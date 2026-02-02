@@ -45,7 +45,7 @@ public class ReactiveEffect : BaseRGBEffect
             "Fade Speed",
             EffectParameterType.Speed,
             defaultValue: 50,
-            minValue: 1,
+            minValue: 20,
             maxValue: 100
         ));
 
@@ -54,7 +54,7 @@ public class ReactiveEffect : BaseRGBEffect
             "Analog Sensitivity",
             EffectParameterType.Intensity,
             defaultValue: 50,
-            minValue: 1,
+            minValue: 20,
             maxValue: 100
         ));
     }

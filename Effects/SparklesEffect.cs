@@ -53,8 +53,8 @@ public class SparklesEffect : BaseRGBEffect
             "Sparkle Density",
             EffectParameterType.Intensity,
             defaultValue: 20,
-            minValue: 1,
-            maxValue: 100
+            minValue: 5,
+            maxValue: 60
         ));
 
         _parameters.Add(new RangeParameter(
@@ -62,7 +62,7 @@ public class SparklesEffect : BaseRGBEffect
             "Fade Speed",
             EffectParameterType.Speed,
             defaultValue: 50,
-            minValue: 1,
+            minValue: 20,
             maxValue: 100
         ));
     }

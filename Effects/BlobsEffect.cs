@@ -46,7 +46,7 @@ public class BlobsEffect : BaseRGBEffect
             "Float Speed",
             EffectParameterType.Speed,
             defaultValue: 80,
-            minValue: 1,
+            minValue: 40,
             maxValue: 100
         ));
 
@@ -55,7 +55,7 @@ public class BlobsEffect : BaseRGBEffect
             "Minimum Size",
             EffectParameterType.Size,
             defaultValue: 10,
-            minValue: 10,
+            minValue: 5,
             maxValue: 50
         ));
 
@@ -64,7 +64,7 @@ public class BlobsEffect : BaseRGBEffect
             "Maximum Size",
             EffectParameterType.Size,
             defaultValue: 40,
-            minValue: 30,
+            minValue: 20,
             maxValue: 100
         ));
 
@@ -73,7 +73,7 @@ public class BlobsEffect : BaseRGBEffect
             "Blur Factor",
             EffectParameterType.Intensity,
             defaultValue: 70,
-            minValue: 10,
+            minValue: 30,
             maxValue: 100
         ));
 
@@ -82,7 +82,7 @@ public class BlobsEffect : BaseRGBEffect
             "Key Attraction",
             EffectParameterType.Intensity,
             defaultValue: 100,
-            minValue: 0,
+            minValue: 50,
             maxValue: 100
         ));
     }

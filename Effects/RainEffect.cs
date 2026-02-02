@@ -56,17 +56,17 @@ public class RainEffect : BaseRGBEffect
             "density",
             "Rain Density",
             EffectParameterType.Intensity,
-            defaultValue: 30,
-            minValue: 1,
-            maxValue: 100
+            defaultValue: 200,
+            minValue: 100,
+            maxValue: 300
         ));
 
         _parameters.Add(new RangeParameter(
             "trailLength",
             "Trail Length",
-            EffectParameterType.Size,
+            EffectParameterType.Intensity,
             defaultValue: 200,
-            minValue: 10,
+            minValue: 100,
             maxValue: 400
         ));
 

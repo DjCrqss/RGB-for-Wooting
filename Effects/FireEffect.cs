@@ -49,7 +49,7 @@ public class FireEffect : BaseRGBEffect
             EffectParameterType.Size,
             defaultValue: 25.0,
             minValue: 10.0,
-            maxValue: 50.0
+            maxValue: 60.0
         ));
 
         _parameters.Add(new RangeParameter(
@@ -58,7 +58,7 @@ public class FireEffect : BaseRGBEffect
             EffectParameterType.Speed,
             defaultValue: 10,
             minValue: 1,
-            maxValue: 20
+            maxValue: 30
         ));
     }
 
