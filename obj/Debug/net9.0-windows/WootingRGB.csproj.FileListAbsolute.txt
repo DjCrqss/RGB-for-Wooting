@@ -37,3 +37,5 @@ C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\o
 C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\bin\Debug\net9.0-windows\Wooting.NET.dll
 C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\obj\Debug\net9.0-windows\Controls\ToggleSwitch.baml
 C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\obj\Debug\net9.0-windows\Controls\ToggleSwitch.g.cs
+C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\obj\Debug\net9.0-windows\Controls\DeviceSelectorDialog.baml
+C:\Users\DJ\Documents\Projects\Wooting projects\Woot-rgb\WootingRGB\WootingRGB\obj\Debug\net9.0-windows\Controls\DeviceSelectorDialog.g.cs

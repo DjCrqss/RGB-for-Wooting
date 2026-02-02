@@ -137,10 +137,37 @@ namespace WootingRGB
 
                 if (kbSuccess && analogSuccess)
                 {
+                    // If multiple devices detected, show selector
+                    if (_keyboardService.DeviceCount > 1 && _keyboardService.AvailableDevices != null)
+                    {
+                        var deviceSelector = new DeviceSelectorDialog(_keyboardService.AvailableDevices)
+                        {
+                            Owner = this
+                        };
+
+                        if (deviceSelector.ShowDialog() == true && deviceSelector.SelectedDeviceIndex.HasValue)
+                        {
+                            _keyboardService.SetDevice(deviceSelector.SelectedDeviceIndex.Value);
+                        }
+                        else
+                        {
+                            // User cancelled, disconnect
+                            _analogInputService.Shutdown();
+                            _keyboardService.Shutdown();
+                            return;
+                        }
+                    }
+
                     _effectManager.Enable();
                     StatusText.Text = "Connected";
                     StatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4EC9B0"));
-                    DeviceCountText.Text = $"{_keyboardService.DeviceCount} device(s) found";
+
+                    // Show device info with model name if available
+                    var deviceInfo = _keyboardService.DeviceCount > 1 
+                        ? $"{_keyboardService.DeviceCount} devices - Using: {GetDeviceName()}"
+                        : $"{_keyboardService.DeviceCount} device(s) found";
+                    DeviceCountText.Text = deviceInfo;
+                    
                     ConnectButton.Content = "Disconnect";
                     EnableEffectButtons(true);
                 }
@@ -181,6 +208,16 @@ namespace WootingRGB
                     }
                 }
             }
+        }
+
+        private string GetDeviceName()
+        {
+            if (_keyboardService.AvailableDevices != null && 
+                _keyboardService.SelectedDeviceIndex < _keyboardService.AvailableDevices.Length)
+            {
+                return _keyboardService.AvailableDevices[_keyboardService.SelectedDeviceIndex].Model;
+            }
+            return "Unknown";
         }
 
         private void EnableEffectButtons(bool enabled)

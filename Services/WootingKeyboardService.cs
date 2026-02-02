@@ -6,10 +6,15 @@ namespace WootingRGB.Services;
 
 public class WootingKeyboardService : IKeyboardService
 {
+    private RGBDeviceInfo[]? _availableDevices;
+    private int _selectedDeviceIndex = 0;
+
     public bool IsInitialized { get; private set; }
     public int DeviceCount { get; private set; }
     public int MaxRows { get; private set; }
     public int MaxColumns { get; private set; }
+    public RGBDeviceInfo[]? AvailableDevices => _availableDevices;
+    public int SelectedDeviceIndex => _selectedDeviceIndex;
 
     public bool Initialize()
     {
@@ -19,26 +24,54 @@ public class WootingKeyboardService : IKeyboardService
                 return false;
 
             var count = RGBControl.GetDeviceCount();
-            var infos = new RGBDeviceInfo[count];
+            _availableDevices = new RGBDeviceInfo[count];
 
             for (byte i = 0; i < count; i++)
             {
                 RGBControl.SetControlDevice(i);
                 var device = RGBControl.GetDeviceInfo();
-                Debug.WriteLine($"Found device: Connected: {device.Connected}, Model: {device.Model}, Type: {device.DeviceType}, Max Rows: {device.MaxRows}, Max Cols: {device.MaxColumns}, Max Keycode: {device.KeycodeLimit}");
-                MaxColumns = device.MaxColumns;
-                MaxRows = device.MaxRows;
-                infos[i] = device;
+                Debug.WriteLine($"Found device {i}: Connected: {device.Connected}, Model: {device.Model}, Type: {device.DeviceType}, Max Rows: {device.MaxRows}, Max Cols: {device.MaxColumns}");
+                _availableDevices[i] = device;
             }
 
             DeviceCount = count;
-            IsInitialized = true;
+            
+            // Set first device as default
+            if (count > 0)
+            {
+                SetDevice(0);
+            }
 
+            IsInitialized = true;
             return true;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Failed to initialize keyboard: {ex.Message}");
+            return false;
+        }
+    }
+
+    public bool SetDevice(int deviceIndex)
+    {
+        if (_availableDevices == null || deviceIndex < 0 || deviceIndex >= _availableDevices.Length)
+            return false;
+
+        try
+        {
+            RGBControl.SetControlDevice((byte)deviceIndex);
+            _selectedDeviceIndex = deviceIndex;
+            
+            var device = _availableDevices[deviceIndex];
+            MaxColumns = device.MaxColumns;
+            MaxRows = device.MaxRows;
+            
+            Debug.WriteLine($"Switched to device {deviceIndex}: {device.Model}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to set device {deviceIndex}: {ex.Message}");
             return false;
         }
     }
@@ -50,6 +83,7 @@ public class WootingKeyboardService : IKeyboardService
             RGBControl.Close();
             Debug.WriteLine("Keyboard service shutdown");
             IsInitialized = false;
+            _availableDevices = null;
         }
         catch (Exception ex)
         {
