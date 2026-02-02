@@ -1,9 +1,13 @@
 # Wooting RGB Controller
 
 A modular WPF application for controlling RGB effects on Wooting keyboards.
+
 To run this, execute `dotnet run` or `dotnet build` in the directory in a terminal window.
+
 You also need to include a `wooting-rgb-sdk.dll` inside the /bin/Debug/net9.0-windows folder so that the binary can access the file.
 This dll can be [found here](https://github.com/WootingKb/wooting-rgb-sdk/releases/tag/v1.8.0) 
+
+You can also create a .sln file in the parent directory!
 
 
 
