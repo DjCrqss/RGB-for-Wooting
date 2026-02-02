@@ -27,13 +27,13 @@ public class CloudsEffect : BaseRGBEffect
         _parameters.Add(new ColorParameter(
             "skyColor1",
             "Sky Color (Top)",
-            MediaColor.FromRgb(0x30, 0x47, 0x61) // #304761 - Dark blue-gray
+            MediaColor.FromRgb(0x87, 0xBF, 0xFF) // #87BFFF - Light blue
         ));
 
         _parameters.Add(new ColorParameter(
             "skyColor2",
             "Sky Color (Bottom)",
-            MediaColor.FromRgb(0x0B, 0x15, 0x3B) // #0B153B - Deep navy
+            MediaColor.FromRgb(0x11, 0x1F, 0x66) // #111F66 - Dark blue
         ));
 
         _parameters.Add(new RangeParameter(

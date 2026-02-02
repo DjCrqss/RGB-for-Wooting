@@ -32,6 +32,12 @@ public class RainEffect : BaseRGBEffect
     protected override void InitializeParameters()
     {
         _parameters.Add(new ColorParameter(
+            "backgroundColor",
+            "Background Color",
+            Color.FromRgb(0x00, 0x00, 0x00) // Black
+        ));
+
+        _parameters.Add(new ColorParameter(
             "color",
             "Rain Color",
             Colors.Blue
@@ -85,6 +91,7 @@ public class RainEffect : BaseRGBEffect
     {
         if (_colorBuffer == null) return;
 
+        var backgroundColor = GetParameter<ColorParameter>("backgroundColor")?.ColorValue ?? Colors.Black;
         var colorParam = GetParameter<ColorParameter>("color");
         var speed = GetParameter<RangeParameter>("speed")?.NumericValue ?? 10;
         var density = GetParameter<RangeParameter>("density")?.NumericValue ?? 30;
@@ -158,10 +165,20 @@ public class RainEffect : BaseRGBEffect
             }
         }
 
-        // Clear buffer
-        ClearBuffer();
+        // Fill with background color
+        for (int row = 0; row < _keyboardService.MaxRows; row++)
+        {
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
+            {
+                _colorBuffer[row, col] = new KeyColour(
+                    backgroundColor.R,
+                    backgroundColor.G,
+                    backgroundColor.B
+                );
+            }
+        }
 
-        // Draw all trails with their specific colors
+        // Draw all trails with their specific colors on top of background
         foreach (var kvp in _trailData)
         {
             var (row, col) = kvp.Key;

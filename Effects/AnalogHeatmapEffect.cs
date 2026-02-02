@@ -37,7 +37,7 @@ public class AnalogHeatmapEffect : BaseRGBEffect
             "decaySpeed",
             "Decay Speed",
             EffectParameterType.Speed,
-            defaultValue: 35,
+            defaultValue: 50,
             minValue: 1,
             maxValue: 100
         ));
@@ -46,7 +46,7 @@ public class AnalogHeatmapEffect : BaseRGBEffect
             "sensitivity",
             "Sensitivity",
             EffectParameterType.Intensity,
-            defaultValue: 25,
+            defaultValue: 20,
             minValue: 1,
             maxValue: 100
         ));

@@ -26,6 +26,12 @@ public class FireEffect : BaseRGBEffect
     protected override void InitializeParameters()
     {
         _parameters.Add(new ColorParameter(
+            "backgroundColor",
+            "Background Color",
+            Color.FromRgb(0x00, 0x00, 0x00) // Black
+        ));
+
+        _parameters.Add(new ColorParameter(
             "coldColor",
             "Cold Color",
             Colors.Red
@@ -75,6 +81,7 @@ public class FireEffect : BaseRGBEffect
     {
         if (_colorBuffer == null || _heatMap == null || _noiseOffsets == null) return;
 
+        var backgroundColor = GetParameter<ColorParameter>("backgroundColor")?.ColorValue ?? Colors.Black;
         var coldColor = GetParameter<ColorParameter>("coldColor")?.ColorValue ?? Colors.Red;
         var hotColor = GetParameter<ColorParameter>("hotColor")?.ColorValue ?? Colors.Yellow;
         var height = GetParameter<RangeParameter>("height")?.NumericValue ?? 25.0;
@@ -116,7 +123,7 @@ public class FireEffect : BaseRGBEffect
             }
         }
 
-        // Apply gradient with smooth fade to black
+        // Apply gradient with smooth fade to background color
         for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
             for (int col = 0; col < _keyboardService.MaxColumns; col++)
@@ -127,7 +134,7 @@ public class FireEffect : BaseRGBEffect
                 if (heat < 0.25)
                 {
                     var fadeProgress = heat / 0.25; // 0 to 1
-                    color = EffectUtilities.LerpColor(Colors.Black, coldColor, fadeProgress);
+                    color = EffectUtilities.LerpColor(backgroundColor, coldColor, fadeProgress);
                 }
                 else
                 {

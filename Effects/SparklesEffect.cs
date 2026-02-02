@@ -31,6 +31,12 @@ public class SparklesEffect : BaseRGBEffect
     protected override void InitializeParameters()
     {
         _parameters.Add(new ColorParameter(
+            "backgroundColor",
+            "Background Color",
+            Color.FromRgb(0x00, 0x00, 0x00) // Black
+        ));
+
+        _parameters.Add(new ColorParameter(
             "color1",
             "Sparkle Color 1",
             Colors.White
@@ -71,6 +77,7 @@ public class SparklesEffect : BaseRGBEffect
     {
         if (_colorBuffer == null) return;
 
+        var backgroundColor = GetParameter<ColorParameter>("backgroundColor")?.ColorValue ?? Colors.Black;
         var color1 = GetParameter<ColorParameter>("color1")?.ColorValue ?? Colors.White;
         var color2 = GetParameter<ColorParameter>("color2")?.ColorValue ?? Colors.Cyan;
         var density = GetParameter<RangeParameter>("density")?.NumericValue ?? 20;
@@ -89,8 +96,18 @@ public class SparklesEffect : BaseRGBEffect
             });
         }
 
-        // Clear buffer
-        ClearBuffer();
+        // Fill with background color
+        for (int row = 0; row < _keyboardService.MaxRows; row++)
+        {
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
+            {
+                _colorBuffer[row, col] = new KeyColour(
+                    backgroundColor.R,
+                    backgroundColor.G,
+                    backgroundColor.B
+                );
+            }
+        }
 
         // Update and draw sparkles
         var deltaTime = 0.016 * (speed / 50.0); // Assuming ~60fps

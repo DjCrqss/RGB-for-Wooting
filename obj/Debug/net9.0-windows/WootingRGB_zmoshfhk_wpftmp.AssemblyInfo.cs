@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WootingRGB")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+63d01b0b30de97cec58c228007df27ccb1193218")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+496666117999c8f5cc0a214d1ffd79609d6845f6")]
 [assembly: System.Reflection.AssemblyProductAttribute("WootingRGB")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WootingRGB")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

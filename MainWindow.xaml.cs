@@ -77,6 +77,7 @@ namespace WootingRGB
                     case "Static Color":
                     case "Rainbow":
                     case "Voronoi":
+                    case "Nether Portal":
                         categories["Archived"].Add(effect);
                         break;
                     default:

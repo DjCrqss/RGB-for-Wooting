@@ -23,6 +23,12 @@ public class ReactiveEffect : BaseRGBEffect
     protected override void InitializeParameters()
     {
         _parameters.Add(new ColorParameter(
+            "backgroundColor",
+            "Background Color",
+            Color.FromRgb(0x00, 0x00, 0x00) // Black
+        ));
+
+        _parameters.Add(new ColorParameter(
             "pressColor",
             "Press Color",
             Colors.Magenta
@@ -63,6 +69,7 @@ public class ReactiveEffect : BaseRGBEffect
     {
         if (_colorBuffer == null) return;
 
+        var backgroundColor = GetParameter<ColorParameter>("backgroundColor")?.ColorValue ?? Colors.Black;
         var pressColor = GetParameter<ColorParameter>("pressColor")?.ColorValue ?? Colors.Magenta;
         var releaseColor = GetParameter<ColorParameter>("releaseColor")?.ColorValue ?? Colors.Purple;
         var fadeSpeed = GetParameter<RangeParameter>("fadeSpeed")?.NumericValue ?? 50;
@@ -102,10 +109,20 @@ public class ReactiveEffect : BaseRGBEffect
             _keyIntensities.Remove(key);
         }
 
-        // Clear buffer
-        ClearBuffer();
+        // Fill with background color
+        for (int row = 0; row < _keyboardService.MaxRows; row++)
+        {
+            for (int col = 0; col < _keyboardService.MaxColumns; col++)
+            {
+                _colorBuffer[row, col] = new KeyColour(
+                    backgroundColor.R,
+                    backgroundColor.G,
+                    backgroundColor.B
+                );
+            }
+        }
 
-        // Draw active keys
+        // Draw active keys on top of background
         foreach (var kvp in _keyIntensities)
         {
             var intensity = kvp.Value;

@@ -47,6 +47,7 @@ public class EffectManager
         _availableEffects.Add(new CloudsEffect(_keyboardService));
         _availableEffects.Add(new VoronoiEffect(_keyboardService));
         _availableEffects.Add(new BlobsEffect(_keyboardService));
+        _availableEffects.Add(new NetherPortalEffect(_keyboardService));
     }
 
     public void Enable()

@@ -23,25 +23,22 @@ public class BlobsEffect : BaseRGBEffect
 
     protected override void InitializeParameters()
     {
-        _parameters.Add(new RangeParameter(
-            "blobCount",
-            "Blob Count",
-            EffectParameterType.Intensity,
-            defaultValue: 8,
-            minValue: 1,
-            maxValue: 20
+        _parameters.Add(new ColorParameter(
+            "backgroundColor",
+            "Background Color",
+            Color.FromRgb(0x00, 0x00, 0x00) // Black
         ));
 
         _parameters.Add(new ColorParameter(
             "smallColor",
             "Small Blob Color",
-            MediaColor.FromRgb(0xFF, 0x00, 0xFF) // Magenta
+            Color.FromRgb(0xFF, 0x00, 0xFF) // Magenta
         ));
 
         _parameters.Add(new ColorParameter(
             "largeColor",
             "Large Blob Color",
-            MediaColor.FromRgb(0x00, 0xFF, 0xFF) // Cyan
+            Color.FromRgb(0x00, 0xFF, 0xFF) // Cyan
         ));
 
         _parameters.Add(new RangeParameter(
@@ -120,9 +117,10 @@ public class BlobsEffect : BaseRGBEffect
     {
         if (_colorBuffer == null) return;
 
+        var backgroundColor = GetParameter<ColorParameter>("backgroundColor")?.ColorValue ?? Color.FromRgb(0, 0, 0);
         var blobCount = (int)(GetParameter<RangeParameter>("blobCount")?.NumericValue ?? 8);
-        var smallColor = GetParameter<ColorParameter>("smallColor")?.ColorValue ?? MediaColor.FromRgb(255, 0, 255);
-        var largeColor = GetParameter<ColorParameter>("largeColor")?.ColorValue ?? MediaColor.FromRgb(0, 255, 255);
+        var smallColor = GetParameter<ColorParameter>("smallColor")?.ColorValue ?? Color.FromRgb(255, 0, 255);
+        var largeColor = GetParameter<ColorParameter>("largeColor")?.ColorValue ?? Color.FromRgb(0, 255, 255);
         var speed = (GetParameter<RangeParameter>("speed")?.NumericValue ?? 30) / 100.0;
         var minSize = GetParameter<RangeParameter>("minSize")?.NumericValue ?? 20;
         var maxSize = GetParameter<RangeParameter>("maxSize")?.NumericValue ?? 60;
@@ -255,9 +253,9 @@ public class BlobsEffect : BaseRGBEffect
             for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
                 double totalIntensity = 0;
-                double totalR = 0;
-                double totalG = 0;
-                double totalB = 0;
+                double totalR = backgroundColor.R;
+                double totalG = backgroundColor.G;
+                double totalB = backgroundColor.B;
 
                 foreach (var blob in _blobs)
                 {
@@ -290,21 +288,12 @@ public class BlobsEffect : BaseRGBEffect
                     }
                 }
 
-                // Normalize and set color
-                if (totalIntensity > 0)
-                {
-                    byte r = (byte)Math.Clamp(totalR / totalIntensity, 0, 255);
-                    byte g = (byte)Math.Clamp(totalG / totalIntensity, 0, 255);
-                    byte b = (byte)Math.Clamp(totalB / totalIntensity, 0, 255);
+                // Set color (blend blob colors over background)
+                byte r = (byte)Math.Clamp(totalR, 0, 255);
+                byte g = (byte)Math.Clamp(totalG, 0, 255);
+                byte b = (byte)Math.Clamp(totalB, 0, 255);
 
-                    // Apply total intensity as brightness multiplier
-                    double brightness = Math.Min(1.0, totalIntensity);
-                    r = (byte)(r * brightness);
-                    g = (byte)(g * brightness);
-                    b = (byte)(b * brightness);
-
-                    _colorBuffer[row, col] = new KeyColour(r, g, b);
-                }
+                _colorBuffer[row, col] = new KeyColour(r, g, b);
             }
         }
 
