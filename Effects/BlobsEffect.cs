@@ -45,7 +45,7 @@ public class BlobsEffect : BaseRGBEffect
             "speed",
             "Float Speed",
             EffectParameterType.Speed,
-            defaultValue: 30,
+            defaultValue: 80,
             minValue: 1,
             maxValue: 100
         ));

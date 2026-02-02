@@ -8,9 +8,11 @@ public interface IKeyboardService
     int MaxColumns { get; }
     Wooting.RGBDeviceInfo[]? AvailableDevices { get; }
     int SelectedDeviceIndex { get; }
+    bool IsMultiDeviceMode { get; }
 
     bool Initialize();
     bool SetDevice(int deviceIndex);
+    bool EnableMultiDeviceMode();
     void Shutdown();
     void SetFullKeyboard(Wooting.KeyColour[,] colors);
     void UpdateKeyboard();

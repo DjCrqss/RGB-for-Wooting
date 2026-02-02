@@ -145,9 +145,18 @@ namespace WootingRGB
                             Owner = this
                         };
 
-                        if (deviceSelector.ShowDialog() == true && deviceSelector.SelectedDeviceIndex.HasValue)
+                        if (deviceSelector.ShowDialog() == true)
                         {
-                            _keyboardService.SetDevice(deviceSelector.SelectedDeviceIndex.Value);
+                            if (deviceSelector.UseAllDevices)
+                            {
+                                // Enable multi-device mode
+                                _keyboardService.EnableMultiDeviceMode();
+                            }
+                            else if (deviceSelector.SelectedDeviceIndex.HasValue)
+                            {
+                                // Single device mode
+                                _keyboardService.SetDevice(deviceSelector.SelectedDeviceIndex.Value);
+                            }
                         }
                         else
                         {
@@ -161,11 +170,21 @@ namespace WootingRGB
                     _effectManager.Enable();
                     StatusText.Text = "Connected";
                     StatusText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4EC9B0"));
-
-                    // Show device info with model name if available
-                    var deviceInfo = _keyboardService.DeviceCount > 1 
-                        ? $"{_keyboardService.DeviceCount} devices - Using: {GetDeviceName()}"
-                        : $"{_keyboardService.DeviceCount} device(s) found";
+                    
+                    // Show device info
+                    string deviceInfo;
+                    if (_keyboardService.IsMultiDeviceMode)
+                    {
+                        deviceInfo = $"🌟 {_keyboardService.DeviceCount} devices (Synchronized)";
+                    }
+                    else if (_keyboardService.DeviceCount > 1)
+                    {
+                        deviceInfo = $"{_keyboardService.DeviceCount} devices - Using: {GetDeviceName()}";
+                    }
+                    else
+                    {
+                        deviceInfo = $"{_keyboardService.DeviceCount} device(s) found";
+                    }
                     DeviceCountText.Text = deviceInfo;
                     
                     ConnectButton.Content = "Disconnect";
