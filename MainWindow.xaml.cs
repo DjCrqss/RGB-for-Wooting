@@ -71,10 +71,12 @@ namespace WootingRGB
                     case "Pressure Bars":
                     case "Joystick":
                     case "Heatmap":
+                    case "Blobs":
                         categories["Hall Effect"].Add(effect);
                         break;
                     case "Static Color":
                     case "Rainbow":
+                    case "Voronoi":
                         categories["Archived"].Add(effect);
                         break;
                     default:
