@@ -32,19 +32,19 @@ public class AudioVisualizerEffect : BaseRGBEffect, IDisposable
         _parameters.Add(new ColorParameter(
             "lowColor",
             "Low Frequency Color",
-            MediaColor.FromRgb(0x00, 0x80, 0xFF) // Blue
+            MediaColor.FromRgb(0x00, 0xFF, 0x00) 
         ));
 
         _parameters.Add(new ColorParameter(
             "highColor",
             "High Frequency Color",
-            MediaColor.FromRgb(0xFF, 0x00, 0x80) // Pink/Red
+            MediaColor.FromRgb(0xFF, 0x00, 0x00)
         ));
 
         _parameters.Add(new ColorParameter(
             "backgroundColor",
             "Background Color",
-            MediaColor.FromRgb(0x14, 0x14, 0x14) // Dark gray
+            MediaColor.FromRgb(0x00, 0x00, 0x00)
         ));
 
         _parameters.Add(new RangeParameter(
@@ -57,10 +57,10 @@ public class AudioVisualizerEffect : BaseRGBEffect, IDisposable
         ));
 
         _parameters.Add(new RangeParameter(
-            "decay",
-            "Decay Speed",
+            "smoothing",
+            "Smoothing",
             EffectParameterType.Speed,
-            defaultValue: 50,
+            defaultValue: 75,
             minValue: 10,
             maxValue: 100
         ));
@@ -69,7 +69,7 @@ public class AudioVisualizerEffect : BaseRGBEffect, IDisposable
             "frequencyRange",
             "Frequency Range (Hz)",
             EffectParameterType.Size,
-            defaultValue: 6000,
+            defaultValue: 16000,
             minValue: 1000,
             maxValue: 20000
         ));
@@ -137,7 +137,7 @@ public class AudioVisualizerEffect : BaseRGBEffect, IDisposable
         var highColor = GetParameter<ColorParameter>("highColor")?.ColorValue ?? MediaColor.FromRgb(255, 0, 128);
         var backgroundColor = GetParameter<ColorParameter>("backgroundColor")?.ColorValue ?? MediaColor.FromRgb(20, 20, 20);
         var sensitivity = GetParameter<RangeParameter>("sensitivity")?.NumericValue ?? 100;
-        var decay = GetParameter<RangeParameter>("decay")?.NumericValue ?? 50;
+        var smoothing = GetParameter<RangeParameter>("smoothing")?.NumericValue ?? 50;
         var frequencyRange = (int)(GetParameter<RangeParameter>("frequencyRange")?.NumericValue ?? 6000);
         var useLogScale = GetParameter<BooleanParameter>("logarithmicScale")?.BooleanValue ?? true;
 
@@ -150,13 +150,9 @@ public class AudioVisualizerEffect : BaseRGBEffect, IDisposable
             fftMagnitudes = FftSharp.Transform.FFTmagnitude(paddedAudio);
         }
 
-        // Calculate how many FFT bins to use based on frequency range
         int fftBinsToUse = Math.Min(frequencyRange * fftMagnitudes.Length / (_audioCapture?.WaveFormat.SampleRate ?? 48000), fftMagnitudes.Length);
-        
-        // Split FFT data into columns and average
         double[] columnValues = SplitAndAverage(fftMagnitudes, fftBinsToUse, _keyboardService.MaxColumns);
 
-        // Apply logarithmic scaling if enabled
         if (useLogScale)
         {
             NormalizeValuesLogarithmic(columnValues);
@@ -164,37 +160,62 @@ public class AudioVisualizerEffect : BaseRGBEffect, IDisposable
 
         // Scale values to fit rows based on sensitivity
         double maxPower = 0.008 * (100.0 / sensitivity);
-        ScaleValues(columnValues, maxPower, _keyboardService.MaxRows);
+        ScaleValuesSmooth(columnValues, maxPower, _keyboardService.MaxRows);
 
-        // Apply decay
-        double decayRate = decay / 10.0;
+        double decaySpeed = (101 - smoothing) / 200.0;
         for (int i = 0; i < _keyboardService.MaxColumns; i++)
         {
-            if (_columnDecayValues[i] <= columnValues[i])
+            if (columnValues[i] >= _columnDecayValues[i])
             {
+                // Instant rise to current value (audio is louder)
                 _columnDecayValues[i] = columnValues[i];
             }
-            else if (_columnDecayValues[i] > 0)
+            else
             {
-                _columnDecayValues[i] = Math.Max(0, _columnDecayValues[i] - decayRate);
+                // Smooth falling decay - subtract a consistent amount like gravity
+                _columnDecayValues[i] = Math.Max(0, _columnDecayValues[i] - decaySpeed);
+                
+                if (columnValues[i] > 0 && _columnDecayValues[i] < columnValues[i])
+                {
+                    _columnDecayValues[i] = columnValues[i];
+                }
             }
         }
 
-        // Render visualization
+        // Render visualization with smooth bars
         for (int row = 0; row < _keyboardService.MaxRows; row++)
         {
             for (int col = 0; col < _keyboardService.MaxColumns; col++)
             {
-                // Calculate color gradient from low to high frequency
-                double colorProgress = (double)col / (_keyboardService.MaxColumns - 1);
-                var columnColor = LerpColor(lowColor, highColor, colorProgress);
-
-                // Determine if this pixel should be lit based on column height
-                int maxHeight = Math.Max((int)columnValues[col], (int)_columnDecayValues[col]);
+                // Calculate distance from bottom (inverted row)
+                double pixelFromBottom = _keyboardService.MaxRows - row;
+                double heightValue = _columnDecayValues[col];
                 
-                if (row >= _keyboardService.MaxRows - maxHeight)
+                // Only render if height is above a very small threshold
+                if (heightValue < 0.01)
                 {
+                    _colorBuffer[row, col] = new KeyColour(backgroundColor.R, backgroundColor.G, backgroundColor.B);
+                }
+                else if (pixelFromBottom <= heightValue)
+                {
+                    // Calculate color gradient from low to high frequency
+                    double colorProgress = (double)col / Math.Max(1, _keyboardService.MaxColumns - 1);
+                    var columnColor = LerpColor(lowColor, highColor, colorProgress);
                     _colorBuffer[row, col] = new KeyColour(columnColor.R, columnColor.G, columnColor.B);
+                }
+                else if (pixelFromBottom <= heightValue + 1.0)
+                {
+                    // Calculate color gradient from low to high frequency
+                    double colorProgress = (double)col / Math.Max(1, _keyboardService.MaxColumns - 1);
+                    var columnColor = LerpColor(lowColor, highColor, colorProgress);
+                    
+                    // Smooth anti-aliased edge at the top of the bar
+                    double fadeAmount = heightValue + 1.0 - pixelFromBottom;
+                    _colorBuffer[row, col] = new KeyColour(
+                        (byte)(columnColor.R * fadeAmount),
+                        (byte)(columnColor.G * fadeAmount),
+                        (byte)(columnColor.B * fadeAmount)
+                    );
                 }
                 else
                 {
@@ -237,22 +258,29 @@ public class AudioVisualizerEffect : BaseRGBEffect, IDisposable
         return result;
     }
 
-    private void ScaleValues(double[] values, double maxPower, int maxRows)
+    private void ScaleValuesSmooth(double[] values, double maxPower, int maxRows)
     {
         double scaleFactor = maxRows / maxPower;
 
         for (int i = 0; i < values.Length; i++)
         {
-            values[i] = Math.Min((int)(values[i] * scaleFactor), maxRows);
+            values[i] = Math.Min(values[i] * scaleFactor, maxRows);
         }
     }
 
     private void NormalizeValuesLogarithmic(double[] values)
     {
-        for (int i = 0; i < values.Length; i++)
+        int n = values.Length;
+        for (int i = 0; i < n; i++)
         {
-            // Logarithmic scaling emphasizes lower frequencies
-            values[i] *= (2 * Math.Log10(3 * i + 1) + 1);
+            // Scaling curve that heavily reduces the very first column (bass)
+            // while boosting mids and highs for visibility
+            double t = (double)i / (n - 1); // 0 to 1 across columns
+            
+            // Start at 0.25x for first column, gradually increase to 3.0x for last
+            double scaleFactor = 0.25 + Math.Pow(t, 1.2) * 2.75; 
+            
+            values[i] *= scaleFactor;
         }
     }
 
