@@ -6,6 +6,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    
+    <!-- Publishing configuration for small executable -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    
+    <!-- Size optimizations -->
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +23,14 @@
     <PackageReference Include="RGB.NET.Devices.Wooting" Version="3.1.0" />
     <PackageReference Include="Wooting.NET" Version="1.6.3" />
     <PackageReference Include="WootingAnalogSDK.NET" Version="0.5.0" />
+  </ItemGroup>
+
+  <!-- Include native RGB SDK DLL -->
+  <ItemGroup>
+    <Content Include="lib\wooting-rgb-sdk.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
