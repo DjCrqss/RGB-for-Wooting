@@ -2,22 +2,15 @@
 
 A modular WPF application for controlling RGB effects on Wooting keyboards.
 
-## Performance Optimizations
+To run this, execute `dotnet run` or `dotnet build` in the directory in a terminal window.
 
-All effects use **direct KeyColour array manipulation** with a single SDK call per frame:
-- No byte array conversions or translations
-- Direct mapping to Wooting SDK format
-- Single `SetFull()` + `UpdateKeyboard()` call per frame
-- Smooth 60fps animations
+You also need to include a `wooting-rgb-sdk.dll` inside the /bin/Debug/net9.0-windows folder so that the binary can access the file.
+This dll can be [found here](https://github.com/WootingKb/wooting-rgb-sdk/releases/tag/v1.8.0) 
 
-## Understanding Buffer vs Device Dimensions
+You can also create a .sln file in the parent directory!
 
-**Important:** There's a distinction between buffer size and actual keyboard dimensions:
 
-- **`RGBControl.MaxRGBRows/MaxRGBCols`**: Buffer dimensions (e.g., 6x21) - ensures LEDs are positioned correctly
-- **`IKeyboardService.MaxRows/MaxColumns`**: Actual device dimensions (may be smaller, e.g., 6x17 for 60HE)
 
-**Effects should use `_keyboardService.MaxRows` and `_keyboardService.MaxColumns`** for positioning logic (rain, fire, etc.). The unused portion of the buffer doesn't need to be set and won't affect the keyboard.
 
 ## Adding a New RGB Effect
 
@@ -126,14 +119,3 @@ for (int row = 0; row < _keyboardService.MaxRows; row++)
 _keyboardService.SetFullKeyboard(_colorBuffer);
 _keyboardService.UpdateKeyboard();
 ```
-
-## Architecture Benefits
-
-? **Maximum Performance**: Direct KeyColour array with no conversions  
-? **Simple & Clean**: No byte array indexing math  
-? **Type Safe**: Compile-time checking with KeyColour struct  
-? **Device Aware**: Uses actual keyboard dimensions for positioning  
-? **Modular**: Each effect is self-contained  
-? **Expandable**: Add effects without modifying existing code  
-? **Customizable**: Effects declare their own parameters  
-? **60 FPS**: Smooth animations with 16ms update interval
