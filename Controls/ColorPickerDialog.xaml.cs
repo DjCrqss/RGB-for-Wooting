@@ -7,7 +7,7 @@ using WootingRGB.lib;
 
 namespace WootingRGB.Controls;
 
-public partial class ColorPickerDialog : Window
+public partial class ColorPickerDialog : UserControl
 {
     public Color SelectedColor { get; private set; }
     private static readonly List<Color> RecentColors = new();
@@ -20,6 +20,7 @@ public partial class ColorPickerDialog : Window
     private bool _isDraggingCanvas = false;
 
     public event EventHandler<Color>? ColorChanged;
+    public event EventHandler? PickerClosed;
 
     public ColorPickerDialog(Color initialColor)
     {
@@ -38,27 +39,17 @@ public partial class ColorPickerDialog : Window
         UpdateHexBox();
         LoadRecentColors();
 
-        // Update picker position after the window is loaded and rendered
+        // Update picker position after the control is loaded and rendered
         this.Loaded += (s, e) =>
         {
             UpdatePickerPosition();
         };
+    }
 
-        // Make window close when clicking outside
-        this.Deactivated += (s, e) => 
-        {
-            if (this.IsActive == false)
-            {
-                AddToRecentColors(SelectedColor);
-                Close();
-            }
-        };
-        
-        // Also save when window closes
-        this.Closing += (s, e) =>
-        {
-            AddToRecentColors(SelectedColor);
-        };
+    public void OnClosing()
+    {
+        AddToRecentColors(SelectedColor);
+        PickerClosed?.Invoke(this, EventArgs.Empty);
     }
 
     private void ColorCanvas_MouseDown(object sender, MouseButtonEventArgs e)

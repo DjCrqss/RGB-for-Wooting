@@ -395,23 +395,34 @@ namespace WootingRGB
                         buttonTemplate.VisualTree = border;
                         colorButton.Template = buttonTemplate;
 
+                        // Create popup for color picker
+                        var popup = new Popup
+                        {
+                            StaysOpen = false,
+                            AllowsTransparency = true,
+                            Placement = PlacementMode.Bottom,
+                            PlacementTarget = colorButton
+                        };
+
                         colorButton.Click += (s, e) =>
                         {
-                            var dialog = new ColorPickerDialog(colorParam.ColorValue)
-                            {
-                                Owner = this
-                            };
+                            var pickerControl = new ColorPickerDialog(colorParam.ColorValue);
 
-                            dialog.ColorChanged += (sender, newColor) =>
+                            pickerControl.ColorChanged += (sender, newColor) =>
                             {
                                 colorParam.Value = newColor;
                                 colorButton.Background = new SolidColorBrush(newColor);
                             };
 
-                            dialog.ShowDialog();
-                            
-                            colorParam.Value = dialog.SelectedColor;
-                            colorButton.Background = new SolidColorBrush(dialog.SelectedColor);
+                            popup.Closed += (sender, args) =>
+                            {
+                                colorParam.Value = pickerControl.SelectedColor;
+                                colorButton.Background = new SolidColorBrush(pickerControl.SelectedColor);
+                                pickerControl.OnClosing();
+                            };
+
+                            popup.Child = pickerControl;
+                            popup.IsOpen = true;
                         };
 
                         Grid.SetColumn(colorButton, 1);
