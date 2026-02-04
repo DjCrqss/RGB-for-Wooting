@@ -49,6 +49,7 @@ public class EffectManager
         _availableEffects.Add(new BlobsEffect(_keyboardService));
         _availableEffects.Add(new NetherPortalEffect(_keyboardService));
         _availableEffects.Add(new AudioVisualizerEffect(_keyboardService));
+        _availableEffects.Add(new DinosaurEyeEffect(_keyboardService));
     }
 
     public void Enable()

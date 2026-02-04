@@ -317,7 +317,7 @@
         <!-- Right Panel - Effect Parameters (spans both rows) -->
         <StackPanel Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
             <TextBlock Text="EFFECT PARAMETERS" Style="{StaticResource SectionTitle}"/>
-            <Border x:Name="ParametersCard" Background="#252526" CornerRadius="6" Padding="20">
+            <Border x:Name="ParametersCard" Background="#252526" CornerRadius="6" Padding="20" Height="540">
                 <ScrollViewer Style="{StaticResource CustomScrollViewer}" 
                               VerticalScrollBarVisibility="Auto">
                     <StackPanel x:Name="ParametersPanel">
